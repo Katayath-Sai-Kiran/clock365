@@ -7,11 +7,11 @@ part 'organization.g.dart';
 @HiveType(typeId: kOrgHiveType)
 class Organization {
   @HiveField(0)
-  String id = '';
+  String? id = '';
   @HiveField(1)
-  String name = '';
+  String? name = '';
   @HiveField(2)
-  bool staffSignIn = true;
+  bool? staffSignIn = true;
   @HiveField(3)
   bool visitorsSignIn = false;
   @HiveField(4)
@@ -21,33 +21,44 @@ class Organization {
   @HiveField(6)
   bool printVisitorLabels = true;
   @HiveField(7)
-  bool askVisitorsWhoTheyAreSeeing = false;
+  bool? askVisitorsWhoTheyAreSeeing = false;
   @HiveField(8)
-  bool askPhoneNumber = false;
+  bool? askPhoneNumber = false;
   @HiveField(9)
-  bool askEmail = false;
+  bool? askEmail = false;
   @HiveField(10)
-  bool askActivities = false;
+  bool? askActivities = false;
   @HiveField(11)
-  bool simplifySignOut = false;
+  bool? simplifySignOut = false;
   @HiveField(12)
-  bool touchlessSignIn = false;
+  bool? touchlessSignIn = false;
   @HiveField(13)
-  bool animateSignInButton = false;
+  bool? animateSignInButton = false;
   @HiveField(14)
-  bool rollCallButton = false;
+  bool? rollCallButton = false;
   @HiveField(15)
-  bool showAttendees = false;
+  bool? showAttendees = false;
   @HiveField(16)
-  bool showAnnouncements = false;
+  bool? showAnnouncements = false;
   @HiveField(17)
-  List<ClockUser> staffMembers = [];
+  List<ClockUser>? staffMembers = [];
   @HiveField(18)
-  List<ClockUser> visitors = [];
+  List<ClockUser>? visitors = [];
   @HiveField(19)
-  List<ClockUser> staffSignedIn = [];
+  List<ClockUser>? staffSignedIn = [];
   @HiveField(20)
-  List<ClockUser> visitorsSignedIn = [];
+  List<ClockUser>? visitorsSignedIn = [];
   @HiveField(21)
   ClockUser? owner;
+
+  Organization({
+    this.id,
+    this.animateSignInButton,
+    this.askActivities,
+    this.askEmail,
+    this.askPhoneNumber,
+    this.askVisitorsWhoTheyAreSeeing,
+    this.name,
+    this.owner,
+  });
 }

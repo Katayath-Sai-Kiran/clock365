@@ -7,5 +7,8 @@ class Destination {
   final Widget? child;
 
   const Destination(
-      {required this.id, required this.iconPath, required this.name, this.child});
+      {required this.id,
+      required this.iconPath,
+      required this.name,
+      this.child});
 }

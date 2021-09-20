@@ -17,12 +17,12 @@ class ClockUserAdapter extends TypeAdapter<ClockUser> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return ClockUser()
-      ..id = fields[0] as String
-      ..name = fields[1] as String
+      ..id = fields[0] as String?
+      ..name = fields[1] as String?
       ..website = fields[2] as String?
-      ..isStaff = fields[3] as bool
-      ..login = fields[4] as String
-      ..jobTitle = fields[5] as String;
+      ..isStaff = fields[3] as bool?
+      ..email = fields[4] as String?
+      ..jobTitle = fields[5] as String?;
   }
 
   @override
@@ -38,7 +38,7 @@ class ClockUserAdapter extends TypeAdapter<ClockUser> {
       ..writeByte(3)
       ..write(obj.isStaff)
       ..writeByte(4)
-      ..write(obj.login)
+      ..write(obj.email)
       ..writeByte(5)
       ..write(obj.jobTitle);
   }
@@ -47,7 +47,7 @@ class ClockUserAdapter extends TypeAdapter<ClockUser> {
   int get hashCode => typeId.hashCode;
 
   @override
-  bool operator ==(Object other) =>
+  bool operator == (Object other) =>
       identical(this, other) ||
       other is ClockUserAdapter &&
           runtimeType == other.runtimeType &&

@@ -8,16 +8,18 @@ import 'package:flutter/material.dart';
 
 const int kOrgHiveType = 0;
 const int kClockUserHiveType = 1;
+const int kAuthModelType = 2;
 
 // Hive boxes
 const String kClockUserBox = 'clock_user';
 const String kOrganizationBox = 'organization';
+const String kUserBox = "users";
 
 // Hive box keys
 const String kUserKey = 'clock_user.KEY';
 
 // API
-const String kBaseUrl = '';
+const String kBaseUrl = 'http://192.168.50.195:5000';
 
 // Supported locales
 const kSupportedLocales = <Locale>[
@@ -64,6 +66,7 @@ const String kSignupPasswordRoute = '/signupPassword';
 const String kDashboardRoute = '/dashboard';
 const String kMainScreen = '/mainScreen';
 const String kUserSignInDetailsScreen = '/userSignInDetails';
+const String kVisitorSignInDetailsScreen = '/visitorSignInDetailsScreen';
 const String kUserConfirmSignInScreen = '/userConfirmSignIn';
 const String kCapturePhotoScreen = '/capturePhoto';
 const String kProfileDetailRoute = '/profileDetail';
@@ -75,3 +78,13 @@ final allColors = <Color>[
   Color(0xFF244F43),
   Color(0xFFFF6957),
 ];
+
+//API endPoints
+const String kGenerateOTPEndpoint = "$kBaseUrl/api/v1/send/code/verification";
+const String kVerifyGmailEndPoint = "$kBaseUrl/api/v1/verify/code";
+const String kUserSignUpEndPoint = "$kBaseUrl/api/v1/signup";
+const String kUserLoginEndPont = "$kBaseUrl/api/v1/login";
+const String kUserOrganizationResisterEndpoint = "$kBaseUrl/api/v1/org";
+//const String kStaffSuggestionsEngPoint = "$kBaseUrl/api/v1/org";
+//const String kUserSignUpEndPoint = "$kBaseUrl//api/v1/staff//";
+

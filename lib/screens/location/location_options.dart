@@ -1,11 +1,13 @@
 import 'package:clock365/constants.dart';
 import 'package:clock365/generated/l10n.dart';
+import 'package:clock365/screens/location/location_screen.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class LocationOptionsScreen extends StatefulWidget {
-  const LocationOptionsScreen({Key? key}) : super(key: key);
+  final LocationOptionArguments? arguments;
+  LocationOptionsScreen({Key? key, this.arguments}) : super(key: key);
 
   @override
   _LocationOptionsScreenState createState() => _LocationOptionsScreenState();
@@ -31,25 +33,66 @@ class _LocationOptionsScreenState extends State<LocationOptionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Map userData = ModalRoute.of(context)?.settings.arguments as Map;
+    _orgNameController..text = userData["orgName"];
     return Scaffold(
         appBar: AppBar(
           title: Text(S.of(context).locationOptions),
         ),
         body: SafeArea(
             child: Stack(children: [
-          ListView.builder(
-              padding:
-                  EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 112),
-              itemCount: 15,
-              itemBuilder: (context, index) => index == 0
-                  ? TextField(
-                      controller: _orgNameController,
-                      focusNode: _orgFocusNode,
-                      decoration: InputDecoration(
-                          hintText: 'DLF Saket',
-                          fillColor: getFillColor(_orgFocusNode)),
-                    )
-                  : LocationItem()),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Text(
+                      "Name of site",
+                      style: TextStyle(
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  TextField(
+                    controller: _orgNameController,
+                    focusNode: _orgFocusNode,
+                    decoration: InputDecoration(
+                        hintText: userData["orgName"] ?? "DFL Scaket",
+                        fillColor: getFillColor(_orgFocusNode)),
+                  ),
+                  SizedBox(
+                    height: 16.0,
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Text(
+                          "Who can sign In",
+                          style: TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      LocationItem(
+                        title: "Staff",
+                      ),
+                      LocationItem(
+                        title: "Visitors",
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
           Container(
               alignment: Alignment.bottomCenter,
               margin: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -67,13 +110,15 @@ class _LocationOptionsScreenState extends State<LocationOptionsScreen> {
 }
 
 class LocationItem extends StatefulWidget {
-  const LocationItem({Key? key}) : super(key: key);
+  final String? title;
+  LocationItem({Key? key, required this.title}) : super(key: key);
 
   @override
   _LocationItemState createState() => _LocationItemState();
 }
 
 class _LocationItemState extends State<LocationItem> {
+  bool switchVal = false;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -89,10 +134,16 @@ class _LocationItemState extends State<LocationItem> {
               children: [
                 Expanded(
                     child: Text(
-                  'Data',
+                  widget.title.toString(),
                   style: Theme.of(context).textTheme.button,
                 )),
-                CupertinoSwitch(value: true, onChanged: (newState) => {})
+                CupertinoSwitch(
+                    value: switchVal,
+                    onChanged: (newState) {
+                      setState(() {
+                        switchVal = newState;
+                      });
+                    })
               ],
             )),
       ),

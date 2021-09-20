@@ -37,5 +37,6 @@
     "intensity": "Intensity",
     "colorCode": "Color code",
     "done": "Done",
-    "color": "Color"
+    "color": "Color",
+    "nameOfSite" : "Name of Site",
 }

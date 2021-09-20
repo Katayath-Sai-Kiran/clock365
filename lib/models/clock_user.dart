@@ -14,9 +14,30 @@ class ClockUser {
   @HiveField(3)
   bool? isStaff = false;
   @HiveField(4)
-  String? login = '';
+  String? email = '';
   @HiveField(5)
   String? jobTitle = '';
+  @HiveField(6)
+  List? organizations = [];
 
-  ClockUser({this.id, this.name, this.website, this.isStaff, this.login, this.jobTitle});
+  ClockUser({
+    this.id,
+    this.name,
+    this.website,
+    this.isStaff,
+    this.email,
+    this.jobTitle,
+    this.organizations,
+  });
+
+  factory ClockUser.fromJson(Map<String, dynamic> json) {
+    return ClockUser(
+      email: json["email"],
+      id: json["id"],
+      isStaff: json["isStaff"],
+      jobTitle: json["job_title"],
+      name: json["name"],
+      organizations: json["organizations"],
+    );
+  }
 }

@@ -1,7 +1,10 @@
 import 'package:clock365/constants.dart';
 import 'package:clock365/elements/semi_circle.dart';
+import 'package:clock365/repository/userRepository.dart';
 import 'package:clock365/theme/colors.dart';
+import 'package:clock365/utils/customWidgets.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -18,7 +21,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final FocusNode _loginFocusNode = FocusNode();
   final FocusNode _passwordFocusNode = FocusNode();
+
+  final GlobalKey<FormFieldState> _loginMailKey = GlobalKey<FormFieldState>();
+  final GlobalKey<FormFieldState> _loginPasswordKey =
+      GlobalKey<FormFieldState>();
+
+
+  final CustomWidgets _customWidgets = CustomWidgets();
   bool _isStaffLogin = true;
+  bool _isVisible = false;
 
   Color getFillColor(FocusNode focusNode) =>
       focusNode.hasFocus ? Colors.white : kStrokeColor;
@@ -103,7 +114,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextField(
+                    TextFormField(
+                      textInputAction: TextInputAction.next,
+                      key: _loginMailKey,
+                      onFieldSubmitted: (val) {
+                        _loginMailKey.currentState?.validate();
+                      },
+                      validator: (val) {
+                        if (val?.isEmpty == true ||
+                            val?.contains("@") == false) {
+                          return "Please enter a valid email";
+                        }
+                        return null;
+                      },
+                      keyboardType: TextInputType.emailAddress,
                       controller: _loginTextEditingController,
                       focusNode: _loginFocusNode,
                       decoration: InputDecoration(
@@ -113,12 +137,38 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(
                       height: 16,
                     ),
-                    TextField(
+                    TextFormField(
+                      onFieldSubmitted: (val) {
+                        _loginPasswordKey.currentState?.validate();
+                      },
+                      keyboardType: TextInputType.visiblePassword,
+                      textInputAction: TextInputAction.done,
+                      validator: (val) {
+                        if (val?.isEmpty == true) {
+                          return "Please enter a valid password";
+                        }
+                        return null;
+                      },
+                      key: _loginPasswordKey,
                       controller: _passwordTextEditingController,
                       focusNode: _passwordFocusNode,
+                      obscureText: _isVisible ? true : false,
                       decoration: InputDecoration(
-                          fillColor: getFillColor(_passwordFocusNode),
-                          hintText: 'Password'),
+                        suffixIcon: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _isVisible = !_isVisible;
+                            });
+                          },
+                          icon: Icon(
+                            _isVisible
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                        ),
+                        fillColor: getFillColor(_passwordFocusNode),
+                        hintText: 'Password',
+                      ),
                     ),
                     TextButton(
                         onPressed: () => Navigator.of(context)
@@ -130,10 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Padding(
                         padding: EdgeInsets.symmetric(horizontal: 24),
                         child: ElevatedButton(
-                          onPressed: () => {
-                            Navigator.of(context).pushReplacementNamed(
-                                kLocationModificationRoute)
-                          },
+                          onPressed: login,
                           child: Text('Login'),
                           style: ElevatedButton.styleFrom(
                               minimumSize: Size(double.infinity, 48)),
@@ -155,5 +202,29 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
       )),
     ));
+  }
+
+  Future login() async {
+    try {
+      final UserRepository userRepository = Provider.of(context, listen: false);
+      final String mail = _loginTextEditingController.text.toString();
+      final String password = _passwordTextEditingController.text.toString();
+
+      if (_loginMailKey.currentState?.validate() == true &&
+          _loginPasswordKey.currentState?.validate() == true) {
+        String responce = await userRepository.login(
+            email: mail, password: password, signInType: _isStaffLogin ? 1 : 2);
+        if (responce == "done") {
+          _loginTextEditingController.clear();
+          _passwordTextEditingController.clear();
+          Navigator.of(context)
+              .pushReplacementNamed(kLocationModificationRoute);
+        } else {
+          _customWidgets.snacbar(text: responce, context: context);
+        }
+      }
+    } catch (e) {
+      print(e);
+    }
   }
 }

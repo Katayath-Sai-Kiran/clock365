@@ -25,14 +25,18 @@ class _OrganizationSignInScreenState extends State<OrganizationSignInScreen> {
             children: [
               TextButton(
                   onPressed: () => {
-                    Navigator.of(context).pushNamed(kUserSignInDetailsScreen)
-                  },
+                        Navigator.of(context)
+                            .pushNamed(kUserSignInDetailsScreen)
+                      },
                   child: SignInItem(
                       title: S.of(context).staff,
                       subtitle: S.of(context).xStaffSignIn('DLF Saket'),
                       color: themeData.colorScheme.primary)),
               TextButton(
-                  onPressed: () => {},
+                  onPressed: () => {
+                        Navigator.of(context)
+                            .pushNamed(kVisitorSignInDetailsScreen)
+                      },
                   child: SignInItem(
                       title: S.of(context).visitor,
                       subtitle: S.of(context).visitorFromOtherCompanies,

@@ -4,8 +4,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
-class ReadySetGoScreen extends StatelessWidget {
-  const ReadySetGoScreen({Key? key}) : super(key: key);
+class ReadySetGoScreen extends StatefulWidget {
+  ReadySetGoScreen({Key? key}) : super(key: key);
+
+  @override
+  State<ReadySetGoScreen> createState() => _ReadySetGoScreenState();
+}
+
+class _ReadySetGoScreenState extends State<ReadySetGoScreen> {
+  bool guidedAccess = false;
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +73,14 @@ class ReadySetGoScreen extends StatelessWidget {
                               ),
                             ])),
                         CupertinoSwitch(
-                            value: false, onChanged: (newState) => {})
+                            value: guidedAccess,
+                            thumbColor: themeData.primaryColor,
+                            activeColor: themeData.secondaryHeaderColor,
+                            onChanged: (newState) {
+                              setState(() {
+                                guidedAccess = newState;
+                              });
+                            })
                       ],
                     ))
                   ],
