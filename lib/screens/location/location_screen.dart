@@ -36,6 +36,8 @@ class _LocationScreenState extends State<LocationScreen> {
       focusNode.hasFocus ? Colors.white : kStrokeColor;
   @override
   Widget build(BuildContext context) {
+    Map themeData = ModalRoute.of(context)!.settings.arguments as Map;
+
     OrganizationRepository organizationRepository =
         Provider.of<OrganizationRepository>(context, listen: false);
     return Scaffold(
@@ -60,12 +62,9 @@ class _LocationScreenState extends State<LocationScreen> {
                 ),
                 TextFormField(
                   key: _orgNameKey,
-                  validator: (val) {
-                    if (val!.isEmpty) {
-                      return "Please enter a valid organization name";
-                    }
-                    return null;
-                  },
+                  validator: (val) => val!.isEmpty
+                      ? "Please enter a valid organization name"
+                      : null,
                   controller: _orgNameController,
                   focusNode: _orgFocusNode,
                   decoration: InputDecoration(
@@ -79,40 +78,24 @@ class _LocationScreenState extends State<LocationScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 24),
                     child: ElevatedButton(
                       onPressed: () async {
-                        UserRepository userRepository =
-                            Provider.of<UserRepository>(context, listen: false);
                         String orgName = _orgNameController.text.toString();
 
                         if (_orgNameKey.currentState?.validate() == true) {
-                          Box themeBox =
-                              await Hive.openBox<dynamic>("themeBox");
+                          Box userBox = await Hive.openBox(kUserBox);
+                          String oId = userBox.get(kcurrentUserId);
 
-                          final String oId = userRepository.userId;
-
-                          final String colorCode =
-                              await themeBox.get("primaryColor");
-                          final double colorOpacity =
-                              await themeBox.get("colorIntensity");
-
-                          String response =
-                              await organizationRepository.registerOrganization(
+                          await organizationRepository.registerOrganization(
                             data: {
                               "name": orgName,
-                              "color_code": colorCode,
-                              "color_opacity": colorOpacity,
+                              "color_code": themeData["primaryColor"],
+                              "color_opacity": themeData["colorIntensity"],
                               "created_by": oId,
                             },
                             oId: oId,
                             context: context,
                           );
-                          if (response == "done") {
-                            // userRepository.addOrganizations(
-                            //     organization: orgName);
-                            _orgNameController.clear();
-                          } else {
-                            _customWidgets.snacbar(
-                                text: response, context: context);
-                          }
+
+                          _orgNameController.clear();
                         }
                       },
                       child: Text(
@@ -146,6 +129,7 @@ class _YourSitesState extends State<YourSites> {
   Widget build(BuildContext context) {
     return Consumer<UserRepository>(
         builder: (context, UserRepository userRepository, _) {
+      List? organizations = userRepository.owner.organizations ?? [];
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -163,9 +147,9 @@ class _YourSitesState extends State<YourSites> {
             padding: EdgeInsets.only(bottom: 96),
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
-            itemCount: userRepository.owner!.organizations!.length,
+            itemCount: organizations.length,
             itemBuilder: (context, index) => SiteItem(
-              orgName: userRepository.owner!.organizations![index]["name"],
+              organization: organizations[index],
             ),
           ),
         ],
@@ -180,8 +164,8 @@ class LocationOptionArguments {
 }
 
 class SiteItem extends StatefulWidget {
-  final String orgName;
-  SiteItem({required this.orgName});
+  final Map organization;
+  SiteItem({required this.organization});
   @override
   _SiteItemState createState() => _SiteItemState();
 }
@@ -189,21 +173,26 @@ class SiteItem extends StatefulWidget {
 class _SiteItemState extends State<SiteItem> {
   @override
   Widget build(BuildContext context) {
+    final OrganizationRepository organizationRepository =
+        Provider.of<OrganizationRepository>(context, listen: false);
     return Container(
         margin: EdgeInsets.only(top: 8),
         decoration: BoxDecoration(
             border: Border.all(width: 2, color: kStrokeColor),
             borderRadius: BorderRadius.circular(8)),
         child: InkWell(
-            onTap: () {
+            onTap: () async {
+              await organizationRepository.setCurrentOrganization(
+                  updatedOrganization: widget.organization);
               Navigator.of(context).pushNamed(kLocationOptionsRoute,
-                  arguments: {"orgName": widget.orgName});
+                  arguments: {"orgnization": widget.organization});
             },
             child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
-                    Expanded(child: Text(widget.orgName)),
+                    Expanded(
+                        child: Text(widget.organization["name"] ?? "name")),
                     SizedBox(
                       width: 16,
                     ),
@@ -212,3 +201,15 @@ class _SiteItemState extends State<SiteItem> {
                 ))));
   }
 }
+  // Box user = await Hive.openBox(kUserBox);
+  //             String currentUserId = user.get(kcurrentUserId);
+  //             Map userData = user.get(currentUserId);
+  //             userData.update(
+  //               "currentOrganization",
+  //               (value) => widget.organization,
+  //               ifAbsent: () {
+  //                 return {"currentOrganization": widget.organization};
+  //               },
+  //             );
+                // await user.put(currentUserId, userData);
+// 

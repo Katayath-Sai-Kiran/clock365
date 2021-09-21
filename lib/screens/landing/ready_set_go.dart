@@ -17,6 +17,8 @@ class _ReadySetGoScreenState extends State<ReadySetGoScreen> {
   @override
   Widget build(BuildContext context) {
     final ThemeData themeData = Theme.of(context);
+    final Map currentOrganization =
+        ModalRoute.of(context)!.settings.arguments as Map;
     return Scaffold(
       appBar: AppBar(
         title: Text(S.of(context).readySetGo),

@@ -19,7 +19,7 @@ const String kUserBox = "users";
 const String kUserKey = 'clock_user.KEY';
 
 // API
-const String kBaseUrl = 'http://192.168.50.195:5000';
+const String kBaseUrl = 'http://192.168.1.48:5000';
 
 // Supported locales
 const kSupportedLocales = <Locale>[
@@ -85,6 +85,11 @@ const String kVerifyGmailEndPoint = "$kBaseUrl/api/v1/verify/code";
 const String kUserSignUpEndPoint = "$kBaseUrl/api/v1/signup";
 const String kUserLoginEndPont = "$kBaseUrl/api/v1/login";
 const String kUserOrganizationResisterEndpoint = "$kBaseUrl/api/v1/org";
+const String kAddnNewStaffEndPoint = "$kBaseUrl/api/v1/org/new/staff";
+const String kRemoveStaffEndPoint = "$kBaseUrl/api/v1/org/remove/staff";
 //const String kStaffSuggestionsEngPoint = "$kBaseUrl/api/v1/org";
 //const String kUserSignUpEndPoint = "$kBaseUrl//api/v1/staff//";
 
+//userBox keys
+
+const String kcurrentUserId = "currentUserId";

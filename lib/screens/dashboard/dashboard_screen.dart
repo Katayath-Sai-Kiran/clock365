@@ -1,6 +1,9 @@
 import 'package:clock365/generated/l10n.dart';
+import 'package:clock365/models/clock_user.dart';
+import 'package:clock365/providers/clock_user_provider.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -87,6 +90,8 @@ class StaffList extends StatefulWidget {
 class _StaffListState extends State<StaffList> {
   @override
   Widget build(BuildContext context) {
+    final ClockUserProvider clockUserProvider =
+        Provider.of(context, listen: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -103,15 +108,18 @@ class _StaffListState extends State<StaffList> {
         ListView.builder(
             physics: NeverScrollableScrollPhysics(),
             shrinkWrap: true,
-            itemCount: 40,
-            itemBuilder: (context, index) => StaffItem())
+            itemCount: clockUserProvider.staff.length,
+            itemBuilder: (context, index) => StaffItem(
+                  user: clockUserProvider.staff[index],
+                ))
       ],
     );
   }
 }
 
 class StaffItem extends StatefulWidget {
-  const StaffItem({Key? key}) : super(key: key);
+  final ClockUser user;
+  const StaffItem({Key? key, required this.user}) : super(key: key);
 
   @override
   _StaffItemState createState() => _StaffItemState();
@@ -140,7 +148,7 @@ class _StaffItemState extends State<StaffItem> {
                 width: 16,
               ),
               Expanded(
-                  child: Text('John Doe',
+                  child: Text(widget.user.name.toString(),
                       style: Theme.of(context).textTheme.subtitle2))
             ],
           )),

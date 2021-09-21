@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:clock365/models/clock_user.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:clock365/constants.dart';
@@ -11,19 +12,19 @@ class UserRepository extends ChangeNotifier {
   final Map<String, String> headers = {
     "Content-Type": "application/json",
   };
-  ClockUser? owner;
+  ClockUser owner = ClockUser();
 
-  Future addOrganizations({required String organization}) async {
-    owner!..organizations = [...owner!.organizations!, organization];
+  // Future addOrganizations({required String organization}) async {
+  //   owner!..organizations = [...owner!.organizations!, organization];
 
-    Box clockUserBox = await Hive.openBox<ClockUser>("clockUserBox");
-    await clockUserBox.put("clockUser", owner);
+  //   Box clockUserBox = await Hive.openBox<ClockUser>("clockUserBox");
+  //   await clockUserBox.put("clockUser", owner);
 
-    notifyListeners();
-  }
+  //   notifyListeners();
+  // }
 
   Future updateOwner({required List updatedOrganizations}) async {
-    owner!..organizations = updatedOrganizations;
+    owner..organizations = updatedOrganizations;
     notifyListeners();
   }
 
@@ -31,6 +32,7 @@ class UserRepository extends ChangeNotifier {
     required String email,
     required String password,
     required int signInType,
+    required BuildContext context,
   }) async {
     try {
       Uri url = Uri.parse(kUserLoginEndPont);
@@ -48,30 +50,39 @@ class UserRepository extends ChangeNotifier {
 
       if (responce.statusCode == 200) {
         Box authBoxModel = await Hive.openBox<bool>("AuthModelBox");
-        Box clockUserBox = await Hive.openBox<ClockUser>("clockUserBox");
-        Box users = await Hive.openBox<Map>(kUserBox);
-
         await authBoxModel.put("isLoggedIn", true);
 
+        Box clockUserBox = await Hive.openBox<ClockUser>("clockUserBox");
         Map<String, dynamic> userJson = jsonDecode(responce.body);
+        userJson.update("organizations", (value) => []);
         await clockUserBox.put("clockUser", ClockUser.fromJson(userJson));
+        owner = clockUserBox.get("clockUser");
+
         final String oId = userJson["_id"]["\$oid"];
 
         userId = oId;
+        print(userJson);
+        print(owner.organizations);
 
-        await users.put(oId, {
-          "data": userJson,
-          "organizations": [],
-          "themeData": {},
+        Box users = await Hive.openBox<dynamic>(kUserBox);
+        await users.putAll({
+          kcurrentUserId: oId,
         });
 
-        owner = clockUserBox.get("clockUser");
+        await users.put(
+          oId,
+          {
+            "data": userJson,
+            "themeData": {},
+          },
+        );
 
         notifyListeners();
 
         return "done";
       } else {
         Map message = jsonDecode(responce.body);
+        print(message);
         return message["msg"];
       }
     } catch (e) {
@@ -108,21 +119,26 @@ class UserRepository extends ChangeNotifier {
     }
   }
 
-  Future generateOTP({required final String mail}) async {
+  Future generateOTP(
+      {required final String mail, required final BuildContext context}) async {
     try {
       Uri uri = Uri.parse(kGenerateOTPEndpoint);
       String body = jsonEncode({"email": mail});
-      http.Response responce =
+      http.Response response =
           await http.post(uri, body: body, headers: headers);
-      if (responce.statusCode == 200) {
-        print(responce.body);
-        notifyListeners();
+      String message = jsonDecode(response.body)["msg"];
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(message)));
         return "done";
       } else {
-        Map message = jsonDecode(responce.body);
-        return message["msg"];
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(message)));
+        return message;
       }
     } catch (error) {
+      print(error);
       return error.toString();
     }
   }
@@ -132,43 +148,41 @@ class UserRepository extends ChangeNotifier {
     required String name,
     required String orgName,
     required String website,
+    required BuildContext context,
   }) async {
     try {
       String body = jsonEncode({
-        "email": owner!.email.toString(),
+        "email": owner.email.toString(),
         "name": name,
         "password": password,
         "website": website,
-        "job_title": owner!.jobTitle.toString(),
-        "organizations": [orgName],
+        "job_title": owner.jobTitle.toString(),
+        "organizations": [],
       });
-
-      owner = ClockUser(
-        email: owner!.email,
-        id: "",
-        isStaff: true,
-        jobTitle: owner!.jobTitle,
-        name: name,
-        organizations: [],
-        website: website,
-      );
-
-      notifyListeners();
 
       http.Response response = await http.post(
         Uri.parse(kUserSignUpEndPoint),
         body: body,
         headers: headers,
       );
+      Map<String, dynamic> userResponse = jsonDecode(response.body);
+
+      owner = ClockUser.fromJson(userResponse);
+
+      notifyListeners();
+
       if (response.statusCode == 200) {
-        print("done");
-        return "done";
+        print(response.body);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("successfully signed up")));
+        Navigator.of(context).pushReplacementNamed(kLoginRoute);
       } else {
-        Map message = jsonDecode(response.body);
-        return message["msg"];
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(response.body)));
       }
     } catch (error) {
-      return error.toString();
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.toString())));
     }
   }
 
@@ -180,6 +194,9 @@ class UserRepository extends ChangeNotifier {
         uri,
       );
       List data = jsonDecode(responce.body);
+
+      data.forEach(print);
+
       List<ClockUser> staff = <ClockUser>[
         ...data.map((e) => ClockUser.fromJson(e))
       ];

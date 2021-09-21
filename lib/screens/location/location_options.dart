@@ -33,8 +33,10 @@ class _LocationOptionsScreenState extends State<LocationOptionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Map userData = ModalRoute.of(context)?.settings.arguments as Map;
-    _orgNameController..text = userData["orgName"];
+    final Map currentOrganization =
+        ModalRoute.of(context)?.settings.arguments as Map;
+    _orgNameController..text = currentOrganization["orgnization"]["name"];
+
     return Scaffold(
         appBar: AppBar(
           title: Text(S.of(context).locationOptions),
@@ -62,7 +64,8 @@ class _LocationOptionsScreenState extends State<LocationOptionsScreen> {
                     controller: _orgNameController,
                     focusNode: _orgFocusNode,
                     decoration: InputDecoration(
-                        hintText: userData["orgName"] ?? "DFL Scaket",
+                        hintText: currentOrganization["orgnization"]["name"] ??
+                            "DFL Scaket",
                         fillColor: getFillColor(_orgFocusNode)),
                   ),
                   SizedBox(
@@ -97,8 +100,12 @@ class _LocationOptionsScreenState extends State<LocationOptionsScreen> {
               alignment: Alignment.bottomCenter,
               margin: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               child: ElevatedButton(
-                onPressed: () =>
-                    {Navigator.of(context).pushNamed(kEditStaffRoute)},
+                onPressed: () => {
+                  Navigator.of(context).pushNamed(
+                    kEditStaffRoute,
+                    arguments: currentOrganization,
+                  ),
+                },
                 child: Text(
                   S.of(context).done,
                   style: Theme.of(context).textTheme.button?.copyWith(
@@ -119,6 +126,8 @@ class LocationItem extends StatefulWidget {
 
 class _LocationItemState extends State<LocationItem> {
   bool switchVal = false;
+  bool isStaff = false;
+  bool isVisitors = false;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -141,7 +150,13 @@ class _LocationItemState extends State<LocationItem> {
                     value: switchVal,
                     onChanged: (newState) {
                       setState(() {
-                        switchVal = newState;
+                        if (widget.title == "Staff") {
+                          isStaff = true;
+                          switchVal = newState;
+                        } else {
+                          isVisitors = true;
+                          switchVal = newState;
+                        }
                       });
                     })
               ],

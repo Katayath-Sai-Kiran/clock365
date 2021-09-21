@@ -76,9 +76,6 @@ class _LocationCustomizationScreenState
                                           primaryColor = allColors[index];
                                           currentIndex = index;
                                         });
-                                        // accountProvider.updateIndex(
-                                        //     index: index,
-                                        //     color: allColors[index]);
                                       },
                                       child: Container(
                                         height: 48,
@@ -176,15 +173,13 @@ class _LocationCustomizationScreenState
                     child: ElevatedButton(
                       onPressed: () async {
                         setTheme();
+
                         List<String> colors = [
                           "0xFF6756D8",
                           "0xFFFDBE00",
                           "0xFF244F43",
                           "0xFFFF6957",
                         ];
-                        // Box authBoxModel =
-                        //     await Hive.openBox<bool>("AuthModelBox");
-                        // await authBoxModel.put("isLoggedIn", false);
 
                         Navigator.of(context).pushNamed(
                           kLocationRoute,
@@ -217,11 +212,19 @@ class _LocationCustomizationScreenState
       "0xFF244F43",
       "0xFFFF6957",
     ];
-    Box themeBox = await Hive.openBox<dynamic>("themeBox");
-    await themeBox.putAll({
-      "primaryColor": colors[currentIndex],
-      "colorIntensity": colorIntensity,
-    });
+
+    Box userBox = await Hive.openBox<dynamic>(kUserBox);
+    String? currentUserId = userBox.get(kcurrentUserId);
+    if (currentUserId != null) {
+      Map userData = userBox.get(currentUserId);
+      Map updatedThemeData = userData["themeData"];
+      updatedThemeData = {
+        "primaryColor": colors[currentIndex],
+        "colorIntensity": colorIntensity,
+      };
+      userData.update("themeData", (value) => updatedThemeData);
+      await userBox.put(currentUserId, userData);
+    }
   }
 }
 

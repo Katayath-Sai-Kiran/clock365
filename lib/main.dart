@@ -1,3 +1,4 @@
+import 'package:clock365/constants.dart';
 import 'package:clock365/models/clock_user.dart';
 import 'package:clock365/models/organization.dart';
 import 'package:clock365/providers/clock_user_provider.dart';
@@ -17,12 +18,12 @@ import 'repository/organization_repository.dart';
 
 void main() async {
   await Hive.initFlutter();
+  
   Hive.registerAdapter(ClockUserAdapter());
   Hive.registerAdapter(OrganizationAdapter());
-  await Hive.openBox<bool>("AuthModelBox");
-  await Hive.openBox<dynamic>("themeBox");
+
   await Hive.openBox<ClockUser>("clockUserBox");
-  await Hive.openBox<Map>("users");
+  await Hive.openBox<dynamic>("users");
 
   runApp(Clock365App());
 }
@@ -42,6 +43,9 @@ class _Clock365AppState extends State<Clock365App> {
 
   @override
   Widget build(BuildContext context) {
+    double colorIntensity = 1.0;
+    String colorCode = "0xFF6756D8";
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => ClockUserProvider()),
@@ -49,11 +53,21 @@ class _Clock365AppState extends State<Clock365App> {
         ChangeNotifierProvider(create: (context) => OrganizationRepository()),
       ],
       child: ValueListenableBuilder(
-          valueListenable: Hive.box("themeBox").listenable(),
+          valueListenable: Hive.box<dynamic>(kUserBox).listenable(),
           builder: (context, Box box, child) {
-            String color = box.get("primaryColor") ?? "0xFF6756D8";
-            double intensity = box.get("colorIntensity") ?? 1.0;
-            Color primaryColor = Color(int.parse(color));
+            Map userData = {};
+            List userOrganizations = [];
+            Map themeData = {
+              "primaryColor": colorCode,
+              "colorIntensity": colorIntensity,
+            };
+            String? currentUserId = box.get(kcurrentUserId);
+
+            if (currentUserId != null) {
+              userData = box.get(currentUserId);
+              userOrganizations = userData["organizations"] ?? [];
+              themeData = userData["themeData"];
+            }
 
             return Consumer<ClockUserProvider>(
               builder: (context, ClockUserProvider accountProvider, child) =>
@@ -69,38 +83,18 @@ class _Clock365AppState extends State<Clock365App> {
                 supportedLocales: S.delegate.supportedLocales,
                 theme: Clock365Theme.getThemeData(
                   ThemeData.light(),
-                  intensity: intensity,
-                  pColor: primaryColor,
+                  intensity: themeData["colorIntensity"] ?? 1.0,
+                  pColor:
+                      Color(int.parse(themeData["primaryColor"] ?? colorCode)),
                 ),
-                home: FutureBuilder(
-                  future: getCredentials(),
-                  builder: (BuildContext context, AsyncSnapshot snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return CircularProgressIndicator();
-                    }
-                    final bool isLoggedIn = snapshot.data["isLoggedIn"];
-                    final bool isOrgRegistered =
-                        snapshot.data["isOrgRegistered"];
-                    return isLoggedIn && isOrgRegistered
-                        ? MainScreen()
-                        : isLoggedIn
-                            ? LocationCustomizationScreen()
-                            : LoginScreen();
-                  },
-                ),
+                home: currentUserId != null && userOrganizations.length > 0
+                    ? MainScreen()
+                    : currentUserId != null
+                        ? LocationCustomizationScreen()
+                        : LoginScreen(),
               ),
             );
           }),
     );
-  }
-
-  Future getCredentials() async {
-    Box authModelBox = await Hive.openBox<bool>("AuthModelBox");
-    final bool isLoggedIn = authModelBox.get("isLoggedIn") ?? false;
-    final bool isOrgRegistered = authModelBox.get("isOrgRegistered") ?? false;
-    return {
-      "isLoggedIn": isLoggedIn,
-      "isOrgRegistered": isOrgRegistered,
-    };
   }
 }

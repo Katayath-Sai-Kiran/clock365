@@ -45,11 +45,16 @@ class RouteGenerator {
           settings: settings,
         );
       case kEditStaffRoute:
-        return MaterialPageRoute(builder: (context) => EditStaffScreen());
+        return MaterialPageRoute(
+            builder: (context) => EditStaffScreen(), settings: settings);
       case kLocationRoute:
-        return MaterialPageRoute(builder: (context) => LocationScreen());
+        return MaterialPageRoute(
+            builder: (context) => LocationScreen(), settings: settings);
       case kReadySetGoScreen:
-        return MaterialPageRoute(builder: (context) => ReadySetGoScreen());
+        return MaterialPageRoute(
+          builder: (context) => ReadySetGoScreen(),
+          settings: settings,
+        );
       case kMainScreen:
         return MaterialPageRoute(builder: (context) => MainScreen());
       case kUserSignInDetailsScreen:

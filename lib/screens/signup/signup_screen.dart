@@ -85,14 +85,10 @@ class _SignupScreenState extends State<SignupScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             TextFormField(
-                              validator: (val) {
-                                if (val?.isEmpty == true)
-                                  return "Please enter a valid emial";
-                                if (val?.contains("@") != true)
-                                  return "Email is badly formated";
-
-                                return null;
-                              },
+                              validator: (val) => val?.isEmpty == true ||
+                                      val?.contains("@") != true
+                                  ? "Email is badly formated"
+                                  : null,
                               onFieldSubmitted: (val) {
                                 _mailKey.currentState!.validate();
                               },
@@ -135,6 +131,8 @@ class _SignupScreenState extends State<SignupScreen> {
                               height: 16,
                             ),
                             TextFormField(
+                              keyboardType: TextInputType.name,
+                              textCapitalization: TextCapitalization.words,
                               key: _jobTitleKey,
                               textInputAction: TextInputAction.done,
                               controller: _jobTitleController,
@@ -213,7 +211,10 @@ class _SignupScreenState extends State<SignupScreen> {
     if (_mailKey.currentState!.validate() == true &&
         _confirmMailKey.currentState!.validate()) {
       if (_isTermsAndConditionChecked == true) {
-        String res = await userRepository.generateOTP(mail: mail);
+        String res = await userRepository.generateOTP(
+          mail: mail,
+          context: context,
+        );
         if (res == "done") {
           _customWidgets.snacbar(
             context: context,

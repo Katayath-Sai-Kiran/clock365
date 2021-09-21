@@ -151,26 +151,23 @@ class _SignupPasswordScreenState extends State<SignupPasswordScreen> {
   void signUp() async {
     UserRepository userRepository =
         Provider.of<UserRepository>(context, listen: false);
+
     final String password = _createPasswordController.text.toString();
     final String confirmPassword = _confirmPasswordController.text.toString();
 
     if (_createPasswordKey.currentState?.validate() == true &&
         _confirmPasswordKey.currentState?.validate() == true &&
         password == confirmPassword) {
-      _confirmPasswordController.clear();
-      _createPasswordController.clear();
-
-      String res = await userRepository.signUpClockUser(
+      await userRepository.signUpClockUser(
+        context: context,
         password: password,
         name: userData["updatedName"],
         orgName: userData["updatedCompany"],
         website: userData["updatedWebsite"],
       );
-      if (res == "done") {
-        Navigator.pushReplacementNamed(context, kLoginRoute);
-      } else {
-        print(res);
-      }
+
+      _createPasswordController.clear();
+      _confirmPasswordController.clear();
     }
   }
 }

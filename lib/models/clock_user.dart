@@ -33,7 +33,7 @@ class ClockUser {
   factory ClockUser.fromJson(Map<String, dynamic> json) {
     return ClockUser(
       email: json["email"],
-      id: json["id"],
+      id: json["_id"]["\$oid"],
       isStaff: json["isStaff"],
       jobTitle: json["job_title"],
       name: json["name"],

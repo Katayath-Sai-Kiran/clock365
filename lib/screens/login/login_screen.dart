@@ -4,6 +4,7 @@ import 'package:clock365/repository/userRepository.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:clock365/utils/customWidgets.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -25,7 +26,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormFieldState> _loginMailKey = GlobalKey<FormFieldState>();
   final GlobalKey<FormFieldState> _loginPasswordKey =
       GlobalKey<FormFieldState>();
-
 
   final CustomWidgets _customWidgets = CustomWidgets();
   bool _isStaffLogin = true;
@@ -213,12 +213,42 @@ class _LoginScreenState extends State<LoginScreen> {
       if (_loginMailKey.currentState?.validate() == true &&
           _loginPasswordKey.currentState?.validate() == true) {
         String responce = await userRepository.login(
-            email: mail, password: password, signInType: _isStaffLogin ? 1 : 2);
+          email: mail,
+          password: password,
+          signInType: _isStaffLogin ? 1 : 2,
+          context: context,
+        );
+
         if (responce == "done") {
           _loginTextEditingController.clear();
           _passwordTextEditingController.clear();
-          Navigator.of(context)
-              .pushReplacementNamed(kLocationModificationRoute);
+
+          Box users = await Hive.openBox<dynamic>(kUserBox);
+
+          Map? userIdArray = users.get("userIdArray");
+
+          if (userIdArray != null) {
+            List ids = userIdArray["ids"];
+            String currentID = userRepository.userId;
+
+            if (ids.contains(currentID)) {
+              Navigator.of(context).pushReplacementNamed(kMainScreen);
+            } else {
+              await users.put("userIdArray", {
+                "ids": [currentID],
+              });
+
+              Navigator.of(context)
+                  .pushReplacementNamed(kLocationModificationRoute);
+            }
+          } else {
+            await users.put("userIDArray", {
+              "ids": [],
+            });
+
+            Navigator.of(context)
+                .pushReplacementNamed(kLocationModificationRoute);
+          }
         } else {
           _customWidgets.snacbar(text: responce, context: context);
         }

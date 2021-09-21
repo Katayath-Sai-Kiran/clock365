@@ -2,6 +2,7 @@ import 'package:clock365/constants.dart';
 import 'package:clock365/generated/l10n.dart';
 import 'package:clock365/models/clock_user.dart';
 import 'package:clock365/providers/clock_user_provider.dart';
+import 'package:clock365/repository/organization_repository.dart';
 import 'package:clock365/repository/userRepository.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/material.dart';
@@ -19,8 +20,15 @@ class EditStaffScreen extends StatefulWidget {
 class _EditStaffScreenState extends State<EditStaffScreen> {
   @override
   Widget build(BuildContext context) {
+    final Map curretnOrganization =
+        ModalRoute.of(context)!.settings.arguments as Map;
+    final String orgId = curretnOrganization["orgnization"]["_id"]["\$oid"];
+
     final double _height = MediaQuery.of(context).size.height;
     final ThemeData themeData = Theme.of(context);
+
+    final OrganizationRepository organizationRepository =
+        Provider.of(context, listen: false);
     return Consumer<ClockUserProvider>(
         builder: (context, ClockUserProvider provider, __) {
       List<ClockUser> staff = provider.staff;
@@ -44,41 +52,44 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                   SizedBox(
                     height: 16,
                   ),
-                  TypeAheadField(
-                      suggestionsCallback: (pattern) async {
-                        UserRepository userRepository =
-                            Provider.of<UserRepository>(context, listen: false);
+                  TypeAheadField(suggestionsCallback: (pattern) async {
+                    UserRepository userRepository =
+                        Provider.of<UserRepository>(context, listen: false);
 
-                        List<ClockUser> staff =
-                            await userRepository.getMatches(pattern: pattern) ??
-                                [];
+                    List<ClockUser> staff =
+                        await userRepository.getMatches(pattern: pattern) ?? [];
 
-                        List<ClockUser> filteredStaff = staff
-                            .where((element) => element.name!
-                                .toLowerCase()
-                                .startsWith(pattern.toLowerCase()))
-                            .toList();
+                    List<ClockUser> filteredStaff = staff
+                        .where((element) => element.name!
+                            .toLowerCase()
+                            .startsWith(pattern.toLowerCase()))
+                        .toList();
 
-                        if (staff.length == 0) {
-                          return <ClockUser>[
-                            ClockUser(
-                              name: pattern.toString(),
-                            ),
-                          ];
-                        } else {
-                          return filteredStaff;
-                        }
-                      },
-                      itemBuilder:
-                          (BuildContext context, ClockUser clockUser) =>
-                              MemberItem(
-                                clockUser: clockUser,
-                                isAdd: true,
-                                index: 0,
-                              ),
-                      onSuggestionSelected: (ClockUser clockUser) {
-                        provider.addStaff(newStaffMember: clockUser);
-                      }),
+                    if (staff.length == 0) {
+                      return <ClockUser>[
+                        ClockUser(
+                          name: pattern.toString(),
+                        ),
+                      ];
+                    } else {
+                      return filteredStaff;
+                    }
+                  }, itemBuilder: (BuildContext context, ClockUser clockUser) {
+                    return MemberItem(
+                      clockUser: clockUser,
+                      isAdd: true,
+                      index: 0,
+                      orgId: orgId,
+                    );
+                  }, onSuggestionSelected: (ClockUser clockUser) async {
+                    organizationRepository.addStaffToOrganization(
+                      user: clockUser,
+                      organizationId: orgId,
+                      context: context,
+                    );
+
+                    provider.addStaff(newStaffMember: clockUser);
+                  }),
                   SizedBox(
                     height: 32,
                   ),
@@ -99,6 +110,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                       clockUser: staff[index],
                       isAdd: false,
                       index: index,
+                      orgId: orgId,
                     ),
                   )),
                   SizedBox(
@@ -106,7 +118,10 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.of(context).pushNamed(kReadySetGoScreen);
+                      Navigator.of(context).pushNamed(
+                        kReadySetGoScreen,
+                        arguments: curretnOrganization["orgnization"],
+                      );
                     },
                     child: Text(S.of(context).actionContinue),
                   )
@@ -122,12 +137,14 @@ class MemberItem extends StatefulWidget {
   final ClockUser clockUser;
   final bool isAdd;
   final int index;
-  const MemberItem(
-      {Key? key,
-      required this.clockUser,
-      required this.isAdd,
-      required this.index})
-      : super(key: key);
+  final String orgId;
+  const MemberItem({
+    Key? key,
+    required this.clockUser,
+    required this.isAdd,
+    required this.index,
+    required this.orgId,
+  }) : super(key: key);
 
   @override
   _MemberItemState createState() => _MemberItemState();
@@ -137,6 +154,9 @@ class _MemberItemState extends State<MemberItem> {
   @override
   Widget build(BuildContext context) {
     ClockUserProvider provider = Provider.of<ClockUserProvider>(context);
+    OrganizationRepository organizationRepository =
+        Provider.of<OrganizationRepository>(context, listen: false);
+
     return Container(
       margin: widget.isAdd ? EdgeInsets.zero : EdgeInsets.only(top: 8),
       padding: EdgeInsets.only(left: 16),
@@ -158,9 +178,14 @@ class _MemberItemState extends State<MemberItem> {
           ),
           IconButton(
               onPressed: () {
-                widget.isAdd
-                    ? null
-                    : provider.deleteStaff(staffIndex: widget.index);
+                if (!widget.isAdd) {
+                  organizationRepository.removeStaffFromOrganization(
+                    user: widget.clockUser,
+                    organizationId: widget.orgId,
+                    context: context,
+                  );
+                  provider.deleteStaff(staffIndex: widget.index);
+                }
               },
               icon: SizedBox(
                   height: 24,
