@@ -3,6 +3,7 @@ import 'package:clock365/generated/l10n.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:hive/hive.dart';
 
 class ReadySetGoScreen extends StatefulWidget {
   ReadySetGoScreen({Key? key}) : super(key: key);
@@ -167,8 +168,19 @@ class _ReadySetGoScreenState extends State<ReadySetGoScreen> {
               height: 32,
             ),
             ElevatedButton(
-              onPressed: () =>
-                  {Navigator.of(context).pushReplacementNamed(kMainScreen)},
+              onPressed: () async {
+                Box userBox = await Hive.openBox<dynamic>(kUserBox);
+                String currentUSerId = userBox.get(kcurrentUserId);
+                Map userData = userBox.get(currentUSerId);
+                print(userData);
+                userData.update("loginDetails", (value) => {"isLoggedIn": true},
+                    ifAbsent: () {
+                  return {"isLoggedIn": true};
+                });
+                print(userData);
+                // await userBox.put(currentUSerId, userData);
+                //Navigator.of(context).pushReplacementNamed(kMainScreen);
+              },
               child: Text(S.of(context).actionContinue),
             )
           ],

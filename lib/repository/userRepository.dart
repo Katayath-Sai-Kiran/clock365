@@ -74,6 +74,9 @@ class UserRepository extends ChangeNotifier {
           {
             "data": userJson,
             "themeData": {},
+            "loginDetails": {
+              "isLoggedIn": false,
+            },
           },
         );
 

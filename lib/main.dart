@@ -18,7 +18,7 @@ import 'repository/organization_repository.dart';
 
 void main() async {
   await Hive.initFlutter();
-  
+
   Hive.registerAdapter(ClockUserAdapter());
   Hive.registerAdapter(OrganizationAdapter());
 
@@ -56,7 +56,7 @@ class _Clock365AppState extends State<Clock365App> {
           valueListenable: Hive.box<dynamic>(kUserBox).listenable(),
           builder: (context, Box box, child) {
             Map userData = {};
-            List userOrganizations = [];
+            bool? isLoggenIn = false;
             Map themeData = {
               "primaryColor": colorCode,
               "colorIntensity": colorIntensity,
@@ -65,8 +65,8 @@ class _Clock365AppState extends State<Clock365App> {
 
             if (currentUserId != null) {
               userData = box.get(currentUserId);
-              userOrganizations = userData["organizations"] ?? [];
               themeData = userData["themeData"];
+              isLoggenIn = userData["loginDetails"]["isLoggedIn"] ?? false;
             }
 
             return Consumer<ClockUserProvider>(
@@ -87,7 +87,7 @@ class _Clock365AppState extends State<Clock365App> {
                   pColor:
                       Color(int.parse(themeData["primaryColor"] ?? colorCode)),
                 ),
-                home: currentUserId != null && userOrganizations.length > 0
+                home: currentUserId != null && isLoggenIn == true
                     ? MainScreen()
                     : currentUserId != null
                         ? LocationCustomizationScreen()

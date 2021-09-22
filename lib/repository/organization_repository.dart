@@ -49,25 +49,25 @@ class OrganizationRepository extends ChangeNotifier {
 
       Box userBox = await Hive.openBox<dynamic>(kUserBox);
       String userId = userBox.get(kcurrentUserId);
-      Map userData = userBox.get(userId)["data"];
+      Map userEntireData = userBox.get(userId);
+      Map userData = userEntireData["data"];
       print("organizations are ${userData["organizations"]}");
       List currentUserOrganizations = userData["organizations"];
+      List updatedCurrentOrgs = [];
       currentUserOrganizations.asMap().forEach((key, value) {
-        print("value is $value");
+        if (value["_id"]["\$oid"] == organizationId) {
+          List currentStaff = value["staff"];
+          value["staff"] = [user, ...currentStaff];
+          print("updated value is $value");
+          updatedCurrentOrgs.add(value);
+        } else {
+          updatedCurrentOrgs.add(value);
+        }
       });
-      // List updatedOrganizationsList = [];
-      // currentUserOrganizations.asMap().forEach((index, value) {
-      //   if (value["_id"]["\$oid"] == organizationId) {
-      //     Map orgData = value;
-      //     List previousStaff = orgData["staff"];
-      //     List updatedStaff = [user, ...previousStaff];
-      //     updatedOrganizationsList.add(updatedStaff);
-      //   } else {
-      //     updatedOrganizationsList.add(value);
-      //     userData.update("organizations", (value) => updatedOrganizationsList);
-      //   }
-      // });
-      // print(userData);
+      userData.update("organizations", (value) => updatedCurrentOrgs);
+      userEntireData.update("data", (value) => userData);
+      await userBox.put(userId, userEntireData);
+      print("updated local database");
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         duration: Duration(milliseconds: 2000),
@@ -137,7 +137,7 @@ class OrganizationRepository extends ChangeNotifier {
         List updatedOrganizations = userOrganizations["organizations"];
 
         updatedOrganizations.add(organizationData);
-        
+
         userOrganizations.update(
             "organizations", (value) => updatedOrganizations);
         userData.update("data", (value) => userOrganizations);

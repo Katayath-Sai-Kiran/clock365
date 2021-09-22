@@ -8,6 +8,7 @@ import 'package:clock365/theme/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 
 class EditStaffScreen extends StatefulWidget {
@@ -117,7 +118,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                     height: staff.length == 0 ? _height * 0.4 : 32.0,
                   ),
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       Navigator.of(context).pushNamed(
                         kReadySetGoScreen,
                         arguments: curretnOrganization["orgnization"],
