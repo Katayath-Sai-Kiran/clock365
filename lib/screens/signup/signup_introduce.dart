@@ -1,6 +1,6 @@
 import 'package:clock365/constants.dart';
 import 'package:clock365/elements/semi_circle.dart';
-import 'package:clock365/providers/clock_user_provider.dart';
+import 'package:clock365/providers/user_provider.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -42,6 +42,7 @@ class _SignupIntroduceScreenState extends State<SignupIntroduceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Map userDetails = ModalRoute.of(context)!.settings.arguments as Map;
     return Consumer<ClockUserProvider>(
       builder: (context, ClockUserProvider accountProvider, child) => Scaffold(
         body: SafeArea(
@@ -142,29 +143,31 @@ class _SignupIntroduceScreenState extends State<SignupIntroduceScreen> {
                                 padding: EdgeInsets.symmetric(horizontal: 24),
                                 child: ElevatedButton(
                                   onPressed: () async {
+                                    final String name =
+                                        _nameController.text.toString();
+                                    final String organization =
+                                        _orgNameController.text.toString();
+                                    final String website =
+                                        _websiteNameController.text.toString();
                                     if (_nameKey.currentState?.validate() ==
                                             true &&
                                         _orgNameKey.currentState?.validate() ==
                                             true) {
-                                      final String name =
-                                          _nameController.text.toString();
-                                      final String organization =
-                                          _orgNameController.text.toString();
-                                      final String website =
-                                          _websiteNameController.text
-                                              .toString();
                                       _nameController.clear();
                                       _orgNameController.clear();
                                       _websiteNameController.clear();
                                       Map userData = {
-                                        "updatedName": name,
-                                        "updatedCompany": organization,
-                                        "updatedWebsite": website,
+                                        "name": name,
+                                        "organization": organization,
+                                        "website": website,
+                                        "mail": userDetails["mail"],
+                                        "job_title": userDetails["job_title"],
                                       };
                                       Navigator.of(context)
                                           .pushReplacementNamed(
-                                              kSignupPasswordRoute,
-                                              arguments: userData);
+                                        kSignupPasswordRoute,
+                                        arguments: userData,
+                                      );
                                     }
                                   },
                                   child: Text('Next'),

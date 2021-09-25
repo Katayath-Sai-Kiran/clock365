@@ -16,29 +16,30 @@ class OrganizationAdapter extends TypeAdapter<Organization> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Organization()
-      ..id = fields[0] as String
-      ..name = fields[1] as String
-      ..staffSignIn = fields[2] as bool
+    return Organization(
+      id: fields[0] as String?,
+      animateSignInButton: fields[13] as bool?,
+      askActivities: fields[10] as bool?,
+      askEmail: fields[9] as bool?,
+      askPhoneNumber: fields[8] as bool?,
+      askVisitorsWhoTheyAreSeeing: fields[7] as bool?,
+      name: fields[1] as String?,
+      owner: fields[21] as ClockUser?,
+    )
+      ..staffSignIn = fields[2] as bool?
       ..visitorsSignIn = fields[3] as bool
       ..takeVisitorPhotos = fields[4] as bool
       ..takeStaffPhotos = fields[5] as bool
       ..printVisitorLabels = fields[6] as bool
-      ..askVisitorsWhoTheyAreSeeing = fields[7] as bool
-      ..askPhoneNumber = fields[8] as bool
-      ..askEmail = fields[9] as bool
-      ..askActivities = fields[10] as bool
-      ..simplifySignOut = fields[11] as bool
-      ..touchlessSignIn = fields[12] as bool
-      ..animateSignInButton = fields[13] as bool
-      ..rollCallButton = fields[14] as bool
-      ..showAttendees = fields[15] as bool
-      ..showAnnouncements = fields[16] as bool
-      ..staffMembers = (fields[17] as List).cast<ClockUser>()
-      ..visitors = (fields[18] as List).cast<ClockUser>()
-      ..staffSignedIn = (fields[19] as List).cast<ClockUser>()
-      ..visitorsSignedIn = (fields[20] as List).cast<ClockUser>()
-      ..owner = fields[21] as ClockUser?;
+      ..simplifySignOut = fields[11] as bool?
+      ..touchlessSignIn = fields[12] as bool?
+      ..rollCallButton = fields[14] as bool?
+      ..showAttendees = fields[15] as bool?
+      ..showAnnouncements = fields[16] as bool?
+      ..staffMembers = (fields[17] as List?)?.cast<ClockUser>()
+      ..visitors = (fields[18] as List?)?.cast<ClockUser>()
+      ..staffSignedIn = (fields[19] as List?)?.cast<ClockUser>()
+      ..visitorsSignedIn = (fields[20] as List?)?.cast<ClockUser>();
   }
 
   @override

@@ -1,9 +1,9 @@
 import 'package:clock365/constants.dart';
 import 'package:clock365/generated/l10n.dart';
+import 'package:clock365/providers/organization_provider.dart';
+import 'package:clock365/providers/user_provider.dart';
 import 'package:clock365/repository/organization_repository.dart';
-import 'package:clock365/repository/userRepository.dart';
 import 'package:clock365/theme/colors.dart';
-import 'package:clock365/utils/customWidgets.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
@@ -19,7 +19,6 @@ class _LocationScreenState extends State<LocationScreen> {
   final TextEditingController _orgNameController = TextEditingController();
   final FocusNode _orgFocusNode = FocusNode();
   final GlobalKey<FormFieldState> _orgNameKey = GlobalKey<FormFieldState>();
-  final CustomWidgets _customWidgets = CustomWidgets();
 
   @override
   void initState() {
@@ -127,9 +126,9 @@ class YourSites extends StatefulWidget {
 class _YourSitesState extends State<YourSites> {
   @override
   Widget build(BuildContext context) {
-    return Consumer<UserRepository>(
-        builder: (context, UserRepository userRepository, _) {
-      List? organizations = userRepository.owner.organizations ?? [];
+    return Consumer<ClockUserProvider>(
+        builder: (context, ClockUserProvider userRepository, _) {
+      List? organizations = userRepository.owner!.organizations ?? [];
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -173,43 +172,35 @@ class SiteItem extends StatefulWidget {
 class _SiteItemState extends State<SiteItem> {
   @override
   Widget build(BuildContext context) {
-    final OrganizationRepository organizationRepository =
-        Provider.of<OrganizationRepository>(context, listen: false);
+    final OrganizationProvider organizationProvider =
+        Provider.of<OrganizationProvider>(context, listen: false);
     return Container(
-        margin: EdgeInsets.only(top: 8),
-        decoration: BoxDecoration(
-            border: Border.all(width: 2, color: kStrokeColor),
-            borderRadius: BorderRadius.circular(8)),
-        child: InkWell(
-            onTap: () async {
-              await organizationRepository.setCurrentOrganization(
-                  updatedOrganization: widget.organization);
-              Navigator.of(context).pushNamed(kLocationOptionsRoute,
-                  arguments: {"orgnization": widget.organization});
-            },
-            child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                        child: Text(widget.organization["name"] ?? "name")),
-                    SizedBox(
-                      width: 16,
-                    ),
-                    Icon(Icons.arrow_forward_ios_rounded)
-                  ],
-                ))));
+      margin: EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+          border: Border.all(width: 2, color: kStrokeColor),
+          borderRadius: BorderRadius.circular(8)),
+      child: InkWell(
+        onTap: () async {
+          await organizationProvider.setCurrentOrganization(
+              updatedOrganization: widget.organization);
+
+          Navigator.of(context).pushNamed(kLocationOptionsRoute, arguments: {
+            "orgnization": widget.organization,
+          });
+        },
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              Expanded(child: Text(widget.organization["name"] ?? "name")),
+              SizedBox(
+                width: 16,
+              ),
+              Icon(Icons.arrow_forward_ios_rounded)
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
-  // Box user = await Hive.openBox(kUserBox);
-  //             String currentUserId = user.get(kcurrentUserId);
-  //             Map userData = user.get(currentUserId);
-  //             userData.update(
-  //               "currentOrganization",
-  //               (value) => widget.organization,
-  //               ifAbsent: () {
-  //                 return {"currentOrganization": widget.organization};
-  //               },
-  //             );
-                // await user.put(currentUserId, userData);
-// 

@@ -39,4 +39,6 @@
     "done": "Done",
     "color": "Color",
     "nameOfSite" : "Name of Site",
+    "selectedOrganizations" : "Selected Organizations",
+    "plaeseAcceptTerms" : "Please accept Teams and Conditions",
 }

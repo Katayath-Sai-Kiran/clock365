@@ -18,8 +18,7 @@ class _ReadySetGoScreenState extends State<ReadySetGoScreen> {
   @override
   Widget build(BuildContext context) {
     final ThemeData themeData = Theme.of(context);
-    final Map currentOrganization =
-        ModalRoute.of(context)!.settings.arguments as Map;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(S.of(context).readySetGo),
@@ -170,16 +169,17 @@ class _ReadySetGoScreenState extends State<ReadySetGoScreen> {
             ElevatedButton(
               onPressed: () async {
                 Box userBox = await Hive.openBox<dynamic>(kUserBox);
-                String currentUSerId = userBox.get(kcurrentUserId);
-                Map userData = userBox.get(currentUSerId);
-                print(userData);
+                String currentUserId = userBox.get(kcurrentUserId);
+
+                Map userData = userBox.get(currentUserId);
                 userData.update("loginDetails", (value) => {"isLoggedIn": true},
                     ifAbsent: () {
                   return {"isLoggedIn": true};
                 });
-                print(userData);
-                // await userBox.put(currentUSerId, userData);
-                //Navigator.of(context).pushReplacementNamed(kMainScreen);
+
+                await userBox.put(currentUserId, userData);
+                Navigator.of(context)
+                    .pushNamedAndRemoveUntil(kMainScreen, (route) => false);
               },
               child: Text(S.of(context).actionContinue),
             )

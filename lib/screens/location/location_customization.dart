@@ -1,6 +1,6 @@
 import 'package:clock365/constants.dart';
 import 'package:clock365/generated/l10n.dart';
-import 'package:clock365/providers/clock_user_provider.dart';
+import 'package:clock365/providers/user_provider.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
@@ -173,21 +173,6 @@ class _LocationCustomizationScreenState
                     child: ElevatedButton(
                       onPressed: () async {
                         setTheme();
-
-                        List<String> colors = [
-                          "0xFF6756D8",
-                          "0xFFFDBE00",
-                          "0xFF244F43",
-                          "0xFFFF6957",
-                        ];
-
-                        Navigator.of(context).pushNamed(
-                          kLocationRoute,
-                          arguments: {
-                            "primaryColor": colors[currentIndex],
-                            "colorIntensity": colorIntensity,
-                          },
-                        );
                       },
                       style: ElevatedButton.styleFrom(
                           primary: primaryColor.withOpacity(colorIntensity)),
@@ -225,44 +210,52 @@ class _LocationCustomizationScreenState
       userData.update("themeData", (value) => updatedThemeData);
       await userBox.put(currentUserId, userData);
     }
-  }
-}
 
-class ColorPicker extends StatefulWidget {
-  const ColorPicker({Key? key}) : super(key: key);
-
-  @override
-  _ColorPickerState createState() => _ColorPickerState();
-}
-
-class _ColorPickerState extends State<ColorPicker> {
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<ClockUserProvider>(
-      builder: (context, ClockUserProvider accountProvider, child) => ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: ListView.builder(
-              itemCount: allColors.length,
-              itemBuilder: (context, index) => InkWell(
-                  onTap: () {
-                    accountProvider.updateIndex(
-                        index: index, color: allColors[index]);
-                  },
-                  child: Container(
-                    height: 48,
-                    width: 48,
-                    decoration: BoxDecoration(
-                      border: index == accountProvider.selectedIndex
-                          ? Border.fromBorderSide(
-                              BorderSide(width: 2.0),
-                            )
-                          : null,
-                      borderRadius: BorderRadius.circular(24),
-                      color: allColors[index],
-                    ),
-                    margin: EdgeInsets.only(top: 12),
-                  )))),
+    Navigator.of(context).pushNamed(
+      kLocationRoute,
+      arguments: {
+        "primaryColor": colors[currentIndex],
+        "colorIntensity": colorIntensity,
+      },
     );
   }
 }
+
+// class ColorPicker extends StatefulWidget {
+//   const ColorPicker({Key? key}) : super(key: key);
+
+//   @override
+//   _ColorPickerState createState() => _ColorPickerState();
+// }
+
+// class _ColorPickerState extends State<ColorPicker> {
+//   final int selectedIndex = 0;
+//   @override
+//   Widget build(BuildContext context) {
+//     return Consumer<ClockUserProvider>(
+//       builder: (context, ClockUserProvider accountProvider, child) => ClipRRect(
+//           borderRadius: BorderRadius.circular(16),
+//           child: ListView.builder(
+//               itemCount: allColors.length,
+//               itemBuilder: (context, index) => InkWell(
+//                   onTap: () {
+                    
+//                   },
+//                   child: Container(
+//                     height: 48,
+//                     width: 48,
+//                     decoration: BoxDecoration(
+//                       border: index == selectedIndex
+//                           ? Border.fromBorderSide(
+//                               BorderSide(width: 2.0),
+//                             )
+//                           : null,
+//                       borderRadius: BorderRadius.circular(24),
+//                       color: allColors[index],
+//                     ),
+//                     margin: EdgeInsets.only(top: 12),
+//                   )))),
+//     );
+//   }
+// }
 //ksaikiran0407@gmail.com

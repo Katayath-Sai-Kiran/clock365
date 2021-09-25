@@ -16,19 +16,21 @@ class ClockUserAdapter extends TypeAdapter<ClockUser> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return ClockUser()
-      ..id = fields[0] as String?
-      ..name = fields[1] as String?
-      ..website = fields[2] as String?
-      ..isStaff = fields[3] as bool?
-      ..email = fields[4] as String?
-      ..jobTitle = fields[5] as String?;
+    return ClockUser(
+      id: fields[0] as String?,
+      name: fields[1] as String?,
+      website: fields[2] as String?,
+      isStaff: fields[3] as bool?,
+      email: fields[4] as String?,
+      jobTitle: fields[5] as String?,
+      organizations: (fields[6] as List?)?.cast<dynamic>(),
+    );
   }
 
   @override
   void write(BinaryWriter writer, ClockUser obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -40,14 +42,16 @@ class ClockUserAdapter extends TypeAdapter<ClockUser> {
       ..writeByte(4)
       ..write(obj.email)
       ..writeByte(5)
-      ..write(obj.jobTitle);
+      ..write(obj.jobTitle)
+      ..writeByte(6)
+      ..write(obj.organizations);
   }
 
   @override
   int get hashCode => typeId.hashCode;
 
   @override
-  bool operator == (Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is ClockUserAdapter &&
           runtimeType == other.runtimeType &&

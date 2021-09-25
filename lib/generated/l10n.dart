@@ -410,6 +410,15 @@ class S {
     );
   }
 
+  String get selectedOrganization {
+    return Intl.message(
+      "Selected Organization",
+      name: 'Selected Organization',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Color code`
   String get colorCode {
     return Intl.message(

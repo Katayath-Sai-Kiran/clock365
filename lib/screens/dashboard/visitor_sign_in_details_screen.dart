@@ -3,6 +3,8 @@ import 'package:clock365/generated/l10n.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 
 class VisitorSignInDetailsScreen extends StatefulWidget {
   const VisitorSignInDetailsScreen({Key? key}) : super(key: key);
@@ -15,6 +17,14 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
   final TextEditingController _orgNameController = TextEditingController();
   final FocusNode _yourNameFocusNode = FocusNode();
   final FocusNode _orgNameFocusNode = FocusNode();
+
+  final List<Map> organizations = [
+    {"name": "Wielabs"},
+    {"name": "Xavior School"},
+  ];
+
+  bool _isTermsAndConditionChecked = false;
+  Map _selectedOrganization = {};
 
   @override
   void initState() {
@@ -47,18 +57,34 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
                     SizedBox(
                       height: 16,
                     ),
-                    TextField(
-                      controller: _orgNameController,
-                      focusNode: _orgNameFocusNode,
-                      decoration: InputDecoration(
-                          fillColor: getFillColor(_orgNameFocusNode),
-                          hintText: S.of(context).yourOrgName),
+                    TypeAheadField(
+                      getImmediateSuggestions: true,
+                      loadingBuilder: (_) {
+                        return CircularProgressIndicator();
+                      },
+                      textFieldConfiguration: TextFieldConfiguration(
+                        controller: _orgNameController,
+                        textInputAction: TextInputAction.done,
+                      ),
+                      suggestionsCallback: (pattern) async {
+                        return organizations;
+                      },
+                      itemBuilder: (_, Map organization) {
+                        return SearchOrganizationItem(
+                            organization: organization);
+                      },
+                      onSuggestionSelected: (Map organization) {
+                        setState(() {
+                          _orgNameController.text = organization["name"];
+                          _selectedOrganization = organization;
+                        });
+                      },
                     ),
                     SizedBox(
                       height: 16,
                     ),
                     TextButton(
-                        onPressed: () => {},
+                        onPressed: () {},
                         child: Row(
                           children: [
                             Expanded(
@@ -67,17 +93,42 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
                               style: Theme.of(context).textTheme.bodyText2,
                             )),
                             CupertinoSwitch(
-                                value: true, onChanged: (newState) => {})
+                                value: _isTermsAndConditionChecked,
+                            activeColor: Theme.of(context).colorScheme.primary,
+                            onChanged: (newState) {
+                              setState(() {
+                                _isTermsAndConditionChecked = newState;
+                              });
+                            },
+                          ),
                           ],
-                        ))
+                        ),
+                    ),
                   ],
                 ),
                 Container(
                     alignment: Alignment.bottomCenter,
                     child: ElevatedButton(
-                      onPressed: () => {
-                        Navigator.of(context)
-                            .pushNamed(kUserConfirmSignInScreen)
+                      onPressed: () {
+                        if (_orgNameController.text.isNotEmpty) {
+                          if (_isTermsAndConditionChecked) {
+                            Navigator.of(context)
+                                .pushNamed(kUserConfirmSignInScreen);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content:
+                                    Text("Plaese accept Terms and Conditions"),
+                              ),
+                            );
+                          }
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Organization cannot be empty"),
+                            ),
+                          );
+                        }
                       },
                       child: Text(
                         S.of(context).actionContinue,
@@ -87,6 +138,41 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
                     ))
               ],
             )),
+      ),
+    );
+  }
+}
+
+class SearchOrganizationItem extends StatelessWidget {
+  final Map organization;
+  SearchOrganizationItem({required this.organization});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(left: 16),
+      decoration: BoxDecoration(
+          border: Border.all(
+        color: kStrokeColor,
+      )),
+      child: Row(
+        children: [
+          Expanded(
+              child: Text(
+            organization["name"],
+            style: Theme.of(context).textTheme.bodyText1,
+          )),
+          SizedBox(
+            width: 16,
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: SizedBox(
+              height: 24,
+              width: 24,
+              child: SvgPicture.asset('assets/add_user.svg'),
+            ),
+          )
+        ],
       ),
     );
   }

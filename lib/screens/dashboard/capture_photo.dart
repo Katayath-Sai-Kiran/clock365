@@ -1,6 +1,7 @@
 import 'package:clock365/generated/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CapturePhotoScreen extends StatefulWidget {
   const CapturePhotoScreen({Key? key}) : super(key: key);
@@ -10,6 +11,7 @@ class CapturePhotoScreen extends StatefulWidget {
 }
 
 class _CapturePhotoScreenState extends State<CapturePhotoScreen> {
+  final ImagePicker _imagePicker = ImagePicker();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,7 +37,11 @@ class _CapturePhotoScreenState extends State<CapturePhotoScreen> {
                                 left: 0,
                                 right: 0,
                                 child: IconButton(
-                                    onPressed: () => {},
+                                    onPressed: () async {
+                                      final XFile? image =
+                                          await _imagePicker.pickImage(
+                                              source: ImageSource.gallery);
+                                    },
                                     icon: SizedBox(
                                       height: 48,
                                       width: 48,

@@ -27,11 +27,12 @@ class _OTPBottomSheetState extends State<OTPBottomSheet> {
         children: [
           OTPHeader(),
           Padding(
-              padding: EdgeInsets.all(16),
-              child: OTPBody(
-                mail: widget.mail,
-                jobTitle: widget.jobTitle,
-              ))
+            padding: EdgeInsets.all(16),
+            child: OTPBody(
+              mail: widget.mail,
+              jobTitle: widget.jobTitle,
+            ),
+          )
         ],
       ),
     );
@@ -99,6 +100,8 @@ class _OTPBodyState extends State<OTPBody> {
 
   @override
   Widget build(BuildContext context) {
+    final UserRepository userrepository =
+        Provider.of<UserRepository>(context, listen: false);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -126,26 +129,29 @@ class _OTPBodyState extends State<OTPBody> {
             padding: EdgeInsets.symmetric(vertical: 24, horizontal: 48),
             child: ElevatedButton(
               onPressed: () async {
-                final UserRepository userrepository =
-                    Provider.of<UserRepository>(context, listen: false);
-
-                String res = await userrepository.verifyUserGmail(
+                String response = await userrepository.verifyUserGmail(
                   jobTitle: widget.jobTitle.toString(),
                   otpCode: _otp.toString(),
                   mail: widget.mail.toString(),
                 );
 
-                if (res == "done") {
+                if (response == "done") {
                   _customWidgets.snacbar(
                     context: context,
                     text: "Email verified successfully",
                   );
                   Navigator.of(context).pushNamedAndRemoveUntil(
-                      kSignupIntroduce, (route) => false);
+                    kSignupIntroduce,
+                    (route) => false,
+                    arguments: {
+                      "mail": widget.mail,
+                      "job_title": widget.jobTitle,
+                    },
+                  );
                 } else {
                   _customWidgets.snacbar(
                     context: context,
-                    text: res,
+                    text: response,
                   );
                 }
               },

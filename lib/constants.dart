@@ -9,11 +9,16 @@ import 'package:flutter/material.dart';
 const int kOrgHiveType = 0;
 const int kClockUserHiveType = 1;
 const int kAuthModelType = 2;
+const int kOrganizationModel = 3;
 
 // Hive boxes
 const String kClockUserBox = 'clock_user';
 const String kOrganizationBox = 'organization';
 const String kUserBox = "users";
+const String kCurrentUserKey = "currentUser";
+const String kUserIdBuffer = "USERIDBUFFER";
+const String kcurrentUserId = "currentUserId";
+
 
 // Hive box keys
 const String kUserKey = 'clock_user.KEY';
@@ -87,9 +92,9 @@ const String kUserLoginEndPont = "$kBaseUrl/api/v1/login";
 const String kUserOrganizationResisterEndpoint = "$kBaseUrl/api/v1/org";
 const String kAddnNewStaffEndPoint = "$kBaseUrl/api/v1/org/new/staff";
 const String kRemoveStaffEndPoint = "$kBaseUrl/api/v1/org/remove/staff";
+const String kstaffSignInEndPoint = "$kBaseUrl/api/v1/org/signin";
 //const String kStaffSuggestionsEngPoint = "$kBaseUrl/api/v1/org";
 //const String kUserSignUpEndPoint = "$kBaseUrl//api/v1/staff//";
 
 //userBox keys
 
-const String kcurrentUserId = "currentUserId";

@@ -1,9 +1,16 @@
+import 'dart:ui';
+
+import 'package:clock365/constants.dart';
 import 'package:clock365/generated/l10n.dart';
 import 'package:clock365/models/clock_user.dart';
-import 'package:clock365/providers/clock_user_provider.dart';
+import 'package:clock365/screens/qrTest.dart';
+
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
+import 'package:qr_flutter/qr_flutter.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -14,74 +21,116 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   @override
+  void initState() {
+    super.initState();
+    // ClockUserProvider clockUserProvider = Provider.of(context, listen: false);
+    // await clockUserProvider.getCurrentUser();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final ThemeData themeData = Theme.of(context);
+
     return Scaffold(
-        appBar: AppBar(
-          title: Text(S.of(context).dashboardTitle),
-        ),
-        body: SafeArea(
-            child: SingleChildScrollView(
-          padding: EdgeInsets.all(24),
-          child: Column(
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                      child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        height: 24,
-                      ),
-                      Text(
-                        S.of(context).onSiteAtX('DLF Saket'),
-                        style: themeData.textTheme.headline5?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: themeData.colorScheme.onSurface),
-                      ),
-                      Align(
-                          alignment: Alignment.bottomCenter,
-                          child: TextButton(
-                              onPressed: null,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Text(S.of(context).touchless,
-                                      style: themeData.textTheme.button),
-                                  SizedBox(
-                                    width: 8,
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Text(S.of(context).dashboardTitle),
+      ),
+      body: ValueListenableBuilder(
+        valueListenable: Hive.box<dynamic>(kUserBox).listenable(),
+        builder: (context, Box userBox, child) {
+          String? userId = userBox.get(kcurrentUserId);
+          final Map organization = userBox.get(userId)["currentOrganization"];
+          final List staff = organization["staff_signed_in"];
+          final String organizationId = organization["_id"]["\$oid"];
+          final String organizationName = organization["name"];
+
+          return SafeArea(
+            child: RefreshIndicator(
+              onRefresh: getStaff,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                height: 24,
+                              ),
+                              Text(
+                                S.of(context).onSiteAtX(organizationName),
+                                style: themeData.textTheme.headline5?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: themeData.colorScheme.onSurface),
+                              ),
+                              Align(
+                                alignment: Alignment.bottomCenter,
+                                child: TextButton(
+                                  onPressed: () async {
+                                    Navigator.of(context)
+                                        .push(MaterialPageRoute(builder: (_) {
+                                      return QRViewExample();
+                                    }));
+                                  },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Text(S.of(context).touchless,
+                                          style: themeData.textTheme.button),
+                                      SizedBox(
+                                        width: 8,
+                                      ),
+                                      Icon(
+                                        Icons.arrow_forward_rounded,
+                                        color: themeData.colorScheme.primary,
+                                      ),
+                                    ],
                                   ),
-                                  Icon(
-                                    Icons.arrow_forward_rounded,
-                                    color: themeData.colorScheme.primary,
-                                  )
-                                ],
-                              )))
-                    ],
-                  )),
-                  Expanded(
-                      child: FittedBox(child: Icon(Icons.qr_code_2_rounded)))
-                ],
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: FittedBox(
+                            child: QrImage(
+                              data: organizationId,
+                              version: QrVersions.auto,
+                              size: 150.0,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Divider(
+                      thickness: 2,
+                    ),
+                    StaffList(staff: staff),
+                  ],
+                ),
               ),
-              Divider(
-                thickness: 2,
-              ),
-              StaffList(),
-              // Center(
-              //     child: SvgPicture.asset('assets/no_one_here.svg',
-              //         height: 144, width: 144))
-            ],
-          ),
-        )));
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future getStaff() async {
+    try {} catch (e) {}
   }
 }
 
 class StaffList extends StatefulWidget {
-  const StaffList({Key? key}) : super(key: key);
+  final List staff;
+  const StaffList({Key? key, required this.staff}) : super(key: key);
 
   @override
   _StaffListState createState() => _StaffListState();
@@ -90,8 +139,6 @@ class StaffList extends StatefulWidget {
 class _StaffListState extends State<StaffList> {
   @override
   Widget build(BuildContext context) {
-    final ClockUserProvider clockUserProvider =
-        Provider.of(context, listen: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -105,15 +152,23 @@ class _StaffListState extends State<StaffList> {
               color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.bold),
         ),
-        ListView.builder(
+        RefreshIndicator(
+          onRefresh: getStaff,
+          child: ListView.builder(
             physics: NeverScrollableScrollPhysics(),
             shrinkWrap: true,
-            itemCount: clockUserProvider.staff.length,
+            itemCount: widget.staff.length,
             itemBuilder: (context, index) => StaffItem(
-                  user: clockUserProvider.staff[index],
-                ))
+              user: widget.staff[index],
+            ),
+          ),
+        )
       ],
     );
+  }
+
+  Future getStaff() async {
+    try {} catch (e) {}
   }
 }
 

@@ -27,6 +27,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final GlobalKey<FormFieldState> _mailKey = GlobalKey<FormFieldState>();
   final GlobalKey<FormFieldState> _confirmMailKey = GlobalKey<FormFieldState>();
   final GlobalKey<FormFieldState> _jobTitleKey = GlobalKey<FormFieldState>();
+  
   bool? _isTermsAndConditionChecked = false;
   bool isLoading = false;
 
@@ -180,14 +181,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 24),
                                 child: ElevatedButton(
-                                  onPressed: () async {
-                                    signUp(
-                                      isTerms: _isTermsAndConditionChecked,
-                                      mailController: _businessEmailController,
-                                      mainConfirmController:
-                                          _businessEmailConfirmController,
-                                    );
-                                  },
+                                  onPressed: signUp,
                                   child: Text('Next'),
                                   style: ElevatedButton.styleFrom(
                                       minimumSize: Size(double.infinity, 48)),
@@ -199,27 +193,24 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  Future signUp({
-    required TextEditingController mailController,
-    required TextEditingController mainConfirmController,
-    required bool? isTerms,
-  }) async {
+  Future signUp() async {
     final UserRepository userRepository =
         Provider.of<UserRepository>(context, listen: false);
-    String mail = _businessEmailController.text;
+
+    String mail = _businessEmailController.text.toString();
+    String jobTitle = _jobTitleController.text.toString();
 
     if (_mailKey.currentState!.validate() == true &&
         _confirmMailKey.currentState!.validate()) {
       if (_isTermsAndConditionChecked == true) {
-        String res = await userRepository.generateOTP(
-          mail: mail,
-          context: context,
-        );
+        String res =
+            await userRepository.generateOTP(mail: mail, context: context);
         if (res == "done") {
+          _businessEmailConfirmController.clear();
+          _businessEmailController.clear();
+          _jobTitleController.clear();
           _customWidgets.snacbar(
-            context: context,
-            text: "Verification email sent.",
-          );
+              context: context, text: "Verification email sent.");
           showModalBottomSheet(
               context: context,
               isScrollControlled: true,
@@ -229,10 +220,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       topLeft: Radius.circular(24),
                       topRight: Radius.circular(24))),
               builder: (context) {
-                return OTPBottomSheet(
-                  mail: mail,
-                  jobTitle: _jobTitleController.text.toString(),
-                );
+                return OTPBottomSheet(mail: mail, jobTitle: jobTitle);
               });
         } else {
           _customWidgets.snacbar(

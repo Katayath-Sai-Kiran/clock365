@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:clock365/models/clock_user.dart';
-import 'package:clock365/repository/userRepository.dart';
+import 'package:clock365/providers/user_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
@@ -13,10 +13,11 @@ class OrganizationRepository extends ChangeNotifier {
   final Map<String, String> headers = {
     "Content-Type": "application/json",
   };
-  Map? currentOrganization = {};
+  Map? currentOrganization;
   Map? get currentOrg => currentOrganization;
 
   Future setCurrentOrganization({required Map? updatedOrganization}) async {
+    print("updated are $updatedOrganization");
     currentOrganization = updatedOrganization;
 
     notifyListeners();
@@ -28,52 +29,62 @@ class OrganizationRepository extends ChangeNotifier {
     required BuildContext context,
   }) async {
     final Uri uri = Uri.parse(kAddnNewStaffEndPoint);
-    String body = jsonEncode({
-      "org_id": organizationId,
-      "user_id": user.id,
-    });
+    String body = jsonEncode({"org_id": organizationId, "user_id": user.id});
 
-    http.Response response = await http.put(
-      uri,
-      headers: headers,
-      body: body,
-    );
+    http.Response response = await http.put(uri, headers: headers, body: body);
     Map result = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        duration: Duration(milliseconds: 2000),
-        backgroundColor: Colors.black,
-        content: Text(result["msg"]),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(milliseconds: 2000),
+          backgroundColor: Colors.black,
+          content: Text(result["msg"]),
+        ),
+      );
 
-      Box userBox = await Hive.openBox<dynamic>(kUserBox);
-      String userId = userBox.get(kcurrentUserId);
-      Map userEntireData = userBox.get(userId);
-      Map userData = userEntireData["data"];
-      print("organizations are ${userData["organizations"]}");
-      List currentUserOrganizations = userData["organizations"];
+      final String userId = Hive.box(kUserBox).get(kcurrentUserId);
+      Map userData = Hive.box(kUserBox).get(userId);
+      ClockUser currentUser = userData["currentUser"];
+
+      List? currentUserOrganizations = currentUser.organizations;
       List updatedCurrentOrgs = [];
-      currentUserOrganizations.asMap().forEach((key, value) {
-        if (value["_id"]["\$oid"] == organizationId) {
-          List currentStaff = value["staff"];
-          value["staff"] = [user, ...currentStaff];
-          print("updated value is $value");
-          updatedCurrentOrgs.add(value);
-        } else {
-          updatedCurrentOrgs.add(value);
-        }
-      });
-      userData.update("organizations", (value) => updatedCurrentOrgs);
-      userEntireData.update("data", (value) => userData);
-      await userBox.put(userId, userEntireData);
-      print("updated local database");
+      Map currentOfflineOrganization =
+          Hive.box(kUserBox).get(userId)["currentOrganization"];
+      List currentOfflineOrganizationStaff =
+          currentOfflineOrganization["staff"] ?? [];
+
+      currentUserOrganizations!.asMap().forEach(
+        (key, organization) {
+          if (organization["_id"]["\$oid"] == organizationId) {
+            List currentStaff = organization["staff"];
+            organization["staff"] = [user, ...currentStaff];
+
+            currentOfflineOrganizationStaff.add([user, ...currentStaff]);
+
+            updatedCurrentOrgs.add(organization);
+          } else {
+            updatedCurrentOrgs.add(organization);
+          }
+        },
+      );
+      currentOfflineOrganization.update(
+          "staff", (value) => currentOfflineOrganizationStaff);
+
+      currentUser.organizations = updatedCurrentOrgs;
+
+      userData.update("currentUser", (value) => currentUser);
+      userData.update(
+          "currentOrganization", (value) => currentOfflineOrganization);
+      await Hive.box(kUserBox).put(userId, userData);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        duration: Duration(milliseconds: 2000),
-        backgroundColor: Colors.black,
-        content: Text(result["msg"]),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(milliseconds: 2000),
+          backgroundColor: Colors.black,
+          content: Text(result["msg"]),
+        ),
+      );
     }
   }
 
@@ -83,32 +94,27 @@ class OrganizationRepository extends ChangeNotifier {
     required BuildContext context,
   }) async {
     final Uri uri = Uri.parse(kAddnNewStaffEndPoint);
-    String body = jsonEncode({
-      "org_id": organizationId,
-      "user_id": user.id,
-    });
+    String body = jsonEncode({"org_id": organizationId, "user_id": user.id});
 
-    http.Response response = await http.put(
-      uri,
-      headers: headers,
-      body: body,
-    );
+    http.Response response = await http.put(uri, headers: headers, body: body);
     Map result = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        duration: Duration(milliseconds: 2000),
-        backgroundColor: Colors.black,
-        content: Text(result["msg"]),
-      ));
-      print(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(milliseconds: 2000),
+          backgroundColor: Colors.black,
+          content: Text(result["msg"]),
+        ),
+      );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        duration: Duration(milliseconds: 2000),
-        backgroundColor: Colors.black,
-        content: Text(result["msg"]),
-      ));
-      print(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(milliseconds: 2000),
+          backgroundColor: Colors.black,
+          content: Text(result["msg"]),
+        ),
+      );
     }
   }
 
@@ -117,8 +123,8 @@ class OrganizationRepository extends ChangeNotifier {
     required String oId,
     required BuildContext context,
   }) async {
-    final UserRepository userRepository =
-        Provider.of<UserRepository>(context, listen: false);
+    final ClockUserProvider clockUserProvider =
+        Provider.of(context, listen: false);
     try {
       final Uri uri = Uri.parse(kUserOrganizationResisterEndpoint);
 
@@ -128,25 +134,36 @@ class OrganizationRepository extends ChangeNotifier {
           await http.post(uri, headers: headers, body: encodedData);
 
       if (response.statusCode == 201) {
+        //
         Map organizationData = jsonDecode(response.body);
-        Box users = await Hive.openBox<dynamic>(kUserBox);
-        Map userData = users.get(oId);
 
-        Map userOrganizations = users.get(oId)["data"];
+        Map userData = Hive.box(kUserBox).get(oId);
 
-        List updatedOrganizations = userOrganizations["organizations"];
+        ClockUser currentUser = userData["currentUser"];
 
-        updatedOrganizations.add(organizationData);
+        List? previousOrganizations = currentUser.organizations;
 
-        userOrganizations.update(
-            "organizations", (value) => updatedOrganizations);
-        userData.update("data", (value) => userOrganizations);
+        print("previous organizations are $previousOrganizations");
 
-        await users.put(oId, userData);
+        List updatedOrganizations = [
+          organizationData,
+          ...previousOrganizations!
+        ];
+        print("previous updatedOrganizations are $updatedOrganizations");
 
-        userRepository.updateOwner(updatedOrganizations: updatedOrganizations);
+        clockUserProvider.setOwner(updatedUser: currentUser);
+
+        currentUser.organizations = updatedOrganizations;
+
+        userData.update("currentUser", (value) => currentUser);
+
+        await Hive.box(kUserBox).put(oId, userData);
+
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("organization successfully added")));
+          SnackBar(
+            content: Text("organization successfully added"),
+          ),
+        );
       } else {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(response.body)));
@@ -154,5 +171,22 @@ class OrganizationRepository extends ChangeNotifier {
     } catch (e) {
       print(e.toString());
     }
+  }
+
+  Future<List<Map>> getOrganizationMatches() async {
+    return [];
+  }
+
+  Future staffSignIntoOrganization({
+    required String organizationId,
+    required String userId,
+  }) async {
+    try {
+      http.Response staffSignInresponse = await http.put(
+        Uri.parse(kstaffSignInEndPoint),
+        body: jsonEncode({"org_id": "", "user_id": "", "signin_type": 1}),
+        headers: headers,
+      );
+    } catch (error) {}
   }
 }

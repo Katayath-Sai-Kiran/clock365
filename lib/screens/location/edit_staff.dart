@@ -1,14 +1,13 @@
 import 'package:clock365/constants.dart';
 import 'package:clock365/generated/l10n.dart';
 import 'package:clock365/models/clock_user.dart';
-import 'package:clock365/providers/clock_user_provider.dart';
+import 'package:clock365/providers/user_provider.dart';
 import 'package:clock365/repository/organization_repository.dart';
 import 'package:clock365/repository/userRepository.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
-import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 
 class EditStaffScreen extends StatefulWidget {
@@ -30,6 +29,9 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
 
     final OrganizationRepository organizationRepository =
         Provider.of(context, listen: false);
+    final UserRepository userRepository =
+        Provider.of<UserRepository>(context, listen: false);
+        
     return Consumer<ClockUserProvider>(
         builder: (context, ClockUserProvider provider, __) {
       List<ClockUser> staff = provider.staff;
@@ -54,8 +56,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                     height: 16,
                   ),
                   TypeAheadField(suggestionsCallback: (pattern) async {
-                    UserRepository userRepository =
-                        Provider.of<UserRepository>(context, listen: false);
+                  
 
                     List<ClockUser> staff =
                         await userRepository.getMatches(pattern: pattern) ?? [];
@@ -83,6 +84,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                       orgId: orgId,
                     );
                   }, onSuggestionSelected: (ClockUser clockUser) async {
+
                     organizationRepository.addStaffToOrganization(
                       user: clockUser,
                       organizationId: orgId,
@@ -90,7 +92,8 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                     );
 
                     provider.addStaff(newStaffMember: clockUser);
-                  }),
+                  },
+                  ),
                   SizedBox(
                     height: 32,
                   ),
@@ -178,22 +181,24 @@ class _MemberItemState extends State<MemberItem> {
             width: 16,
           ),
           IconButton(
-              onPressed: () {
-                if (!widget.isAdd) {
-                  organizationRepository.removeStaffFromOrganization(
-                    user: widget.clockUser,
-                    organizationId: widget.orgId,
-                    context: context,
-                  );
-                  provider.deleteStaff(staffIndex: widget.index);
-                }
-              },
-              icon: SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: SvgPicture.asset(!widget.isAdd
-                      ? 'assets/remove_user.svg'
-                      : 'assets/add_user.svg')))
+            onPressed: () {
+              if (!widget.isAdd) {
+                organizationRepository.removeStaffFromOrganization(
+                  user: widget.clockUser,
+                  organizationId: widget.orgId,
+                  context: context,
+                );
+                provider.deleteStaff(staffIndex: widget.index);
+              }
+            },
+            icon: SizedBox(
+              height: 24,
+              width: 24,
+              child: SvgPicture.asset(!widget.isAdd
+                  ? 'assets/remove_user.svg'
+                  : 'assets/add_user.svg'),
+            ),
+          )
         ],
       ),
     );

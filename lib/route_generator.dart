@@ -26,7 +26,8 @@ class RouteGenerator {
       case kSignupRoute:
         return MaterialPageRoute(builder: (context) => SignupScreen());
       case kSignupIntroduce:
-        return MaterialPageRoute(builder: (context) => SignupIntroduceScreen());
+        return MaterialPageRoute(
+            builder: (context) => SignupIntroduceScreen(), settings: settings);
       case kSignupPasswordRoute:
         return MaterialPageRoute(
           builder: (context) => SignupPasswordScreen(),
@@ -58,7 +59,10 @@ class RouteGenerator {
       case kMainScreen:
         return MaterialPageRoute(builder: (context) => MainScreen());
       case kUserSignInDetailsScreen:
-        return MaterialPageRoute(builder: (context) => UserSignInScreen());
+        return MaterialPageRoute(
+          builder: (context) => UserSignInScreen(),
+          settings: settings,
+        );
       case kVisitorSignInDetailsScreen:
         return MaterialPageRoute(
             builder: (context) => VisitorSignInDetailsScreen());
@@ -70,7 +74,10 @@ class RouteGenerator {
       case kDashboardRoute:
         return MaterialPageRoute(builder: (context) => DashboardScreen());
       case kProfileDetailRoute:
-        return MaterialPageRoute(builder: (context) => ProfileDetailScreen());
+        return MaterialPageRoute(
+          builder: (context) => ProfileDetailScreen(),
+          settings: settings,
+        );
       default:
         throw Exception('Unknown route ${settings.name}');
     }

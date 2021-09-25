@@ -1,11 +1,14 @@
 import 'dart:convert';
 
 import 'package:clock365/models/clock_user.dart';
+import 'package:clock365/providers/user_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:clock365/constants.dart';
+import 'package:provider/provider.dart';
 
 class UserRepository extends ChangeNotifier {
   String userId = "";
@@ -13,15 +16,6 @@ class UserRepository extends ChangeNotifier {
     "Content-Type": "application/json",
   };
   ClockUser owner = ClockUser();
-
-  // Future addOrganizations({required String organization}) async {
-  //   owner!..organizations = [...owner!.organizations!, organization];
-
-  //   Box clockUserBox = await Hive.openBox<ClockUser>("clockUserBox");
-  //   await clockUserBox.put("clockUser", owner);
-
-  //   notifyListeners();
-  // }
 
   Future updateOwner({required List updatedOrganizations}) async {
     owner..organizations = updatedOrganizations;
@@ -34,53 +28,59 @@ class UserRepository extends ChangeNotifier {
     required int signInType,
     required BuildContext context,
   }) async {
+    final ClockUserProvider clockUserProvider =
+        Provider.of(context, listen: false);
     try {
-      Uri url = Uri.parse(kUserLoginEndPont);
-      String body = jsonEncode({
-        "email": email,
-        "password": password,
-        "signin_type": signInType,
-      });
-
       http.Response responce = await http.post(
-        url,
-        body: body,
-        headers: headers,
+        Uri.parse(kUserLoginEndPont),
+        body: jsonEncode({
+          "email": email,
+          "password": password,
+          "signin_type": signInType,
+        }),
+        headers: {"Content-Type": "application/json"},
       );
+      Map<String, dynamic> userJson = jsonDecode(responce.body);
 
       if (responce.statusCode == 200) {
-        Box authBoxModel = await Hive.openBox<bool>("AuthModelBox");
-        await authBoxModel.put("isLoggedIn", true);
+        clockUserProvider.setOwner(updatedUser: ClockUser.fromJson(userJson));
 
-        Box clockUserBox = await Hive.openBox<ClockUser>("clockUserBox");
-        Map<String, dynamic> userJson = jsonDecode(responce.body);
-        userJson.update("organizations", (value) => []);
-        await clockUserBox.put("clockUser", ClockUser.fromJson(userJson));
-        owner = clockUserBox.get("clockUser");
+        await Hive.box<ClockUser>(kClockUserBox)
+            .put(kCurrentUserKey, ClockUser.fromJson(userJson));
 
         final String oId = userJson["_id"]["\$oid"];
+        Box bufferBox = await Hive.openBox(kUserIdBuffer);
 
-        userId = oId;
-        print(userJson);
-        print(owner.organizations);
+        List buffer = bufferBox.get("buffer") ?? [];
 
-        Box users = await Hive.openBox<dynamic>(kUserBox);
-        await users.putAll({
-          kcurrentUserId: oId,
-        });
-
-        await users.put(
-          oId,
-          {
-            "data": userJson,
-            "themeData": {},
-            "loginDetails": {
-              "isLoggedIn": false,
+        if (!buffer.contains(oId)) {
+          await Hive.box(kUserBox).putAll(
+            {
+              kcurrentUserId: oId,
+              oId: {
+                "currentUser": ClockUser.fromJson(userJson),
+                "themeData": {},
+                "loginDetails": {"isLoggedIn": false},
+                "currentOrganization": {},
+              },
             },
-          },
-        );
+          );
 
-        notifyListeners();
+          buffer.add(oId);
+          await Hive.box(kUserIdBuffer).put("buffer", buffer);
+
+          Navigator.of(context)
+              .pushReplacementNamed(kLocationModificationRoute);
+        } else {
+          Box userBox = await Hive.openBox(kUserBox);
+          await userBox.put(kcurrentUserId, oId);
+          Map previousData = userBox.get(oId);
+          previousData.update("loginDetails", (value) => {"isLoggedIn": true});
+          await Hive.box(kUserBox).put(oId, previousData);
+
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil(kMainScreen, (route) => false);
+        }
 
         return "done";
       } else {
@@ -94,10 +94,11 @@ class UserRepository extends ChangeNotifier {
     }
   }
 
-  Future verifyUserGmail(
-      {required String mail,
-      required otpCode,
-      required String jobTitle}) async {
+  Future verifyUserGmail({
+    required String mail,
+    required otpCode,
+    required String jobTitle,
+  }) async {
     int otp = int.parse(otpCode);
     try {
       final Uri uri = Uri.parse(kVerifyGmailEndPoint);
@@ -105,13 +106,6 @@ class UserRepository extends ChangeNotifier {
       http.Response responce =
           await http.post(uri, body: body, headers: headers);
       if (responce.statusCode == 200) {
-        owner = ClockUser(
-          email: mail,
-          id: "",
-          isStaff: false,
-          jobTitle: jobTitle,
-        );
-        notifyListeners();
         return "done";
       } else {
         Map message = jsonDecode(responce.body);
@@ -122,13 +116,16 @@ class UserRepository extends ChangeNotifier {
     }
   }
 
-  Future generateOTP(
-      {required final String mail, required final BuildContext context}) async {
+  Future generateOTP({
+    required final String mail,
+    required final BuildContext context,
+  }) async {
     try {
       Uri uri = Uri.parse(kGenerateOTPEndpoint);
-      String body = jsonEncode({"email": mail});
-      http.Response response =
-          await http.post(uri, body: body, headers: headers);
+
+      http.Response response = await http.post(uri,
+          body: jsonEncode({"email": mail}), headers: headers);
+
       String message = jsonDecode(response.body)["msg"];
 
       if (response.statusCode == 200) {
@@ -148,31 +145,27 @@ class UserRepository extends ChangeNotifier {
 
   Future signUpClockUser({
     required String password,
-    required String name,
-    required String orgName,
-    required String website,
     required BuildContext context,
+    required Map data,
   }) async {
     try {
-      String body = jsonEncode({
-        "email": owner.email.toString(),
-        "name": name,
-        "password": password,
-        "website": website,
-        "job_title": owner.jobTitle.toString(),
-        "organizations": [],
-      });
+      String body = jsonEncode(
+        {
+          "email": data["mail"],
+          "name": data["name"],
+          "password": password,
+          "website": data["website"],
+          "job_title": data["job_title"],
+          "organizations": [],
+        },
+      );
+      
 
       http.Response response = await http.post(
         Uri.parse(kUserSignUpEndPoint),
         body: body,
         headers: headers,
       );
-      Map<String, dynamic> userResponse = jsonDecode(response.body);
-
-      owner = ClockUser.fromJson(userResponse);
-
-      notifyListeners();
 
       if (response.statusCode == 200) {
         print(response.body);
@@ -198,7 +191,6 @@ class UserRepository extends ChangeNotifier {
       );
       List data = jsonDecode(responce.body);
 
-      data.forEach(print);
 
       List<ClockUser> staff = <ClockUser>[
         ...data.map((e) => ClockUser.fromJson(e))

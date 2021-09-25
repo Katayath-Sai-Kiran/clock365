@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'colors.dart';
 import 'typography.dart';
@@ -25,7 +25,10 @@ class Clock365Theme extends ColorState {
       !isDarkTheme
           ? baseTheme.copyWith(
               appBarTheme: AppBarTheme(
-                brightness: !isDarkTheme ? Brightness.light : Brightness.dark,
+                systemOverlayStyle: !isDarkTheme
+                    ? SystemUiOverlayStyle.light
+                    : SystemUiOverlayStyle.dark,
+                // brightness: !isDarkTheme ? Brightness.light : Brightness.dark,
                 elevation: 0,
                 backgroundColor: pColor.withOpacity(intensity),
               ),

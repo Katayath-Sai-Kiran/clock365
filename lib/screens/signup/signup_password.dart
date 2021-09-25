@@ -1,6 +1,5 @@
-import 'package:clock365/constants.dart';
 import 'package:clock365/elements/semi_circle.dart';
-import 'package:clock365/providers/clock_user_provider.dart';
+import 'package:clock365/providers/user_provider.dart';
 import 'package:clock365/repository/userRepository.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +26,7 @@ class _SignupPasswordScreenState extends State<SignupPasswordScreen> {
   final GlobalKey<FormFieldState> _createPasswordKey =
       GlobalKey<FormFieldState>();
 
-  Map userData = {};
+  Map? userData = {};
 
   @override
   void initState() {
@@ -46,6 +45,7 @@ class _SignupPasswordScreenState extends State<SignupPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     userData = ModalRoute.of(context)?.settings.arguments as Map;
+    print("user data is $userData");
 
     return Consumer<ClockUserProvider>(
       builder: (context, ClockUserProvider accountProvider, child) {
@@ -69,7 +69,7 @@ class _SignupPasswordScreenState extends State<SignupPasswordScreen> {
                               Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 16),
                                   child: Text(
-                                    'Hello\n${userData["updatedName"]}',
+                                    'Hello\n${userData!["name"]}',
                                     style: Theme.of(context)
                                         .textTheme
                                         .headline4
@@ -158,12 +158,18 @@ class _SignupPasswordScreenState extends State<SignupPasswordScreen> {
     if (_createPasswordKey.currentState?.validate() == true &&
         _confirmPasswordKey.currentState?.validate() == true &&
         password == confirmPassword) {
+      print(userData);
+      Map data = {
+        "mail": userData!["mail"],
+        "job_title": userData!["job_title"],
+        "name": userData!["name"],
+        "orgName": userData!["organization"],
+        "website": userData!["website"],
+      };
       await userRepository.signUpClockUser(
         context: context,
         password: password,
-        name: userData["updatedName"],
-        orgName: userData["updatedCompany"],
-        website: userData["updatedWebsite"],
+        data: data,
       );
 
       _createPasswordController.clear();
