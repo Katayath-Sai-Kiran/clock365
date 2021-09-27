@@ -40,91 +40,86 @@ class _DashboardScreenState extends State<DashboardScreen> {
         valueListenable: Hive.box<dynamic>(kUserBox).listenable(),
         builder: (context, Box userBox, child) {
           String? userId = userBox.get(kcurrentUserId);
-          final Map organization = userBox.get(userId)["currentOrganization"];
-          final List staff = organization["staff_signed_in"];
-          final String organizationId = organization["_id"]["\$oid"];
-          final String organizationName = organization["name"];
+          final Map organization =
+              userBox.get(userId)["currentOrganization"] ?? {};
+          print(organization);
+          final List staff = organization["staff_signed_in"] ?? [];
+          final String organizationId = organization["_id"]["\$oid"] ?? "";
+          final String organizationName = organization["name"] ?? "";
 
           return SafeArea(
-            child: RefreshIndicator(
-              onRefresh: getStaff,
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(
-                                height: 24,
-                              ),
-                              Text(
-                                S.of(context).onSiteAtX(organizationName),
-                                style: themeData.textTheme.headline5?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: themeData.colorScheme.onSurface),
-                              ),
-                              Align(
-                                alignment: Alignment.bottomCenter,
-                                child: TextButton(
-                                  onPressed: () async {
-                                    Navigator.of(context)
-                                        .push(MaterialPageRoute(builder: (_) {
-                                      return QRViewExample();
-                                    }));
-                                  },
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Text(S.of(context).touchless,
-                                          style: themeData.textTheme.button),
-                                      SizedBox(
-                                        width: 8,
-                                      ),
-                                      Icon(
-                                        Icons.arrow_forward_rounded,
-                                        color: themeData.colorScheme.primary,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: FittedBox(
-                            child: QrImage(
-                              data: organizationId,
-                              version: QrVersions.auto,
-                              size: 150.0,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              height: 24,
                             ),
+                            Text(
+                              S.of(context).onSiteAtX(organizationName),
+                              style: themeData.textTheme.headline5?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: themeData.colorScheme.onSurface),
+                            ),
+                            Align(
+                              alignment: Alignment.bottomCenter,
+                              child: TextButton(
+                                onPressed: () async {
+                                  Navigator.of(context)
+                                      .push(MaterialPageRoute(builder: (_) {
+                                    return QRViewExample();
+                                  }));
+                                },
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Text(S.of(context).touchless,
+                                        style: themeData.textTheme.button),
+                                    SizedBox(
+                                      width: 8,
+                                    ),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: themeData.colorScheme.primary,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: FittedBox(
+                          child: QrImage(
+                            data: organizationId,
+                            version: QrVersions.auto,
+                            size: 150.0,
                           ),
                         ),
-                      ],
-                    ),
-                    Divider(
-                      thickness: 2,
-                    ),
-                    StaffList(staff: staff),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                  Divider(
+                    thickness: 2,
+                  ),
+                  StaffList(staff: staff),
+                ],
               ),
             ),
           );
         },
       ),
     );
-  }
-
-  Future getStaff() async {
-    try {} catch (e) {}
   }
 }
 

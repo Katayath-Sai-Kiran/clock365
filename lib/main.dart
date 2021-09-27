@@ -24,7 +24,7 @@ void main() async {
 
   await Hive.openBox<ClockUser>(kClockUserBox);
   await Hive.openBox(kUserIdBuffer);
-  await Hive.openBox<dynamic>("users");
+  await Hive.openBox<dynamic>(kUserBox);
   await Hive.openBox<ClockUser>(kClockUserBox);
 
   runApp(Clock365App());

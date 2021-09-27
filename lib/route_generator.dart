@@ -22,19 +22,30 @@ class RouteGenerator {
   static Route<dynamic> generateRoutes(RouteSettings settings) {
     switch (settings.name) {
       case kLoginRoute:
-        return MaterialPageRoute(builder: (context) => LoginScreen());
+        return MaterialPageRoute(
+          builder: (context) => LoginScreen(),
+          settings: settings,
+        );
       case kSignupRoute:
-        return MaterialPageRoute(builder: (context) => SignupScreen());
+        return MaterialPageRoute(
+          builder: (context) => SignupScreen(),
+          settings: settings,
+        );
       case kSignupIntroduce:
         return MaterialPageRoute(
-            builder: (context) => SignupIntroduceScreen(), settings: settings);
+            builder: (context) => SignupIntroduceScreen(),
+          settings: settings,
+        );
       case kSignupPasswordRoute:
         return MaterialPageRoute(
           builder: (context) => SignupPasswordScreen(),
           settings: settings,
         );
       case kForgotPasswordRoute:
-        return MaterialPageRoute(builder: (context) => ForgotPasswordScreen());
+        return MaterialPageRoute(
+          builder: (context) => ForgotPasswordScreen(),
+          settings: settings,
+        );
       case kLocationModificationRoute:
         return MaterialPageRoute(
           builder: (context) => LocationCustomizationScreen(),
@@ -47,17 +58,24 @@ class RouteGenerator {
         );
       case kEditStaffRoute:
         return MaterialPageRoute(
-            builder: (context) => EditStaffScreen(), settings: settings);
+            builder: (context) => EditStaffScreen(),
+          settings: settings,
+        );
       case kLocationRoute:
         return MaterialPageRoute(
-            builder: (context) => LocationScreen(), settings: settings);
+            builder: (context) => LocationScreen(),
+          settings: settings,
+        );
       case kReadySetGoScreen:
         return MaterialPageRoute(
           builder: (context) => ReadySetGoScreen(),
           settings: settings,
         );
       case kMainScreen:
-        return MaterialPageRoute(builder: (context) => MainScreen());
+        return MaterialPageRoute(
+          builder: (context) => MainScreen(),
+          settings: settings,
+        );
       case kUserSignInDetailsScreen:
         return MaterialPageRoute(
           builder: (context) => UserSignInScreen(),
@@ -65,14 +83,24 @@ class RouteGenerator {
         );
       case kVisitorSignInDetailsScreen:
         return MaterialPageRoute(
-            builder: (context) => VisitorSignInDetailsScreen());
+            builder: (context) => VisitorSignInDetailsScreen(),
+          settings: settings,
+        );
       case kUserConfirmSignInScreen:
         return MaterialPageRoute(
-            builder: (context) => UserConfirmSignInScreen());
+            builder: (context) => UserConfirmSignInScreen(),
+          settings: settings,
+        );
       case kCapturePhotoScreen:
-        return MaterialPageRoute(builder: (context) => CapturePhotoScreen());
+        return MaterialPageRoute(
+          builder: (context) => CapturePhotoScreen(),
+          settings: settings,
+        );
       case kDashboardRoute:
-        return MaterialPageRoute(builder: (context) => DashboardScreen());
+        return MaterialPageRoute(
+          builder: (context) => DashboardScreen(),
+          settings: settings,
+        );
       case kProfileDetailRoute:
         return MaterialPageRoute(
           builder: (context) => ProfileDetailScreen(),

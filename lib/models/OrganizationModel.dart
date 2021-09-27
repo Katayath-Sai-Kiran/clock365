@@ -2,29 +2,58 @@ import 'package:clock365/constants.dart';
 import 'package:clock365/models/clock_user.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+//part 'OrganizationModel.dart';
 
 @HiveType(typeId: kOrganizationModel)
-class OrganizationModel{
+class OrganizationModel {
   @HiveField(0)
   String? organizationName = "";
   @HiveField(1)
-  List<ClockUser> staff = [];
+  List<ClockUser>? staff = [];
   @HiveField(2)
-  List<ClockUser> visitors = [];
+  bool? visitorSignIn = true;
   @HiveField(3)
-  List<ClockUser> staffSignedIn = [];
+  List<ClockUser>? staffSignedIn = [];
   @HiveField(4)
-  List<ClockUser> visitorsSignedIn = [];
+  List<ClockUser>? visitorsSignedIn = [];
   @HiveField(5)
-  List<ClockUser> users = [];
+  bool? staffSignIn = true;
   @HiveField(6)
   String? colorCode = "";
   @HiveField(7)
-  double? colorOpasity = 1.0;
+  double? colorOpacity = 1.0;
   @HiveField(8)
-  ClockUser? owner = ClockUser();
+  String? organizationId = "";
+  @HiveField(9)
+  String? createdBy = '';
 
-  OrganizationModel();
+  OrganizationModel({
+    this.organizationName,
+    this.colorCode,
+    this.colorOpacity,
+    this.organizationId,
+    this.createdBy,
+    this.staff,
+    this.staffSignIn,
+    this.staffSignedIn,
+    this.visitorsSignedIn,
+    this.visitorSignIn,
+  });
+  factory OrganizationModel.fromJson(Map<String, dynamic> json) {
+    return OrganizationModel(
+      colorCode: json["color_code"],
+      colorOpacity: json["color_opacity"],
+      createdBy: json["created_by"],
+      organizationId: json["_id"]["\$oid"],
+      organizationName: json["name"],
+      staff: json["staff"],
+      staffSignIn: json["staff_sign_in"],
+      staffSignedIn: json["staff_signed_in"],
+      visitorSignIn: json["visitor_sign_in"],
+      visitorsSignedIn: json["visitors_signed_in"],
 
+    );
+  }
 
+  
 }

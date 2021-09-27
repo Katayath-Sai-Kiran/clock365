@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:clock365/models/clock_user.dart';
 import 'package:clock365/providers/user_provider.dart';
@@ -159,7 +160,6 @@ class UserRepository extends ChangeNotifier {
           "organizations": [],
         },
       );
-      
 
       http.Response response = await http.post(
         Uri.parse(kUserSignUpEndPoint),
@@ -186,11 +186,8 @@ class UserRepository extends ChangeNotifier {
     final url = "$kBaseUrl/api/v1/staff/$pattern/suggestions";
     try {
       Uri uri = Uri.parse(url);
-      http.Response responce = await http.get(
-        uri,
-      );
+      http.Response responce = await http.get(uri);
       List data = jsonDecode(responce.body);
-
 
       List<ClockUser> staff = <ClockUser>[
         ...data.map((e) => ClockUser.fromJson(e))
@@ -199,6 +196,45 @@ class UserRepository extends ChangeNotifier {
       return staff;
     } catch (e) {
       print("error $e");
+    }
+  }
+
+
+  Future manualSignInUser({
+    required String organizationName,
+    required String userId,
+    required int signInType,
+    required File profileImage,
+    required BuildContext context,
+  }) async {
+    try {
+      var request =
+          http.MultipartRequest("PUT", Uri.parse(kstaffSignInEndPoint));
+      request.files.add(
+        await http.MultipartFile.fromPath("photo", profileImage.path),
+      );
+      request.fields.addAll({
+        "user_id": userId,
+        "org_name": organizationName,
+        "signin_type": signInType.toString(),
+      });
+
+      http.StreamedResponse response = await request.send();
+
+      Map organization = jsonDecode(await response.stream.bytesToString());
+
+      String currentUserId = Hive.box(kUserBox).get(kcurrentUserId);
+      Map userData = Hive.box(kUserBox).get(currentUserId);
+      userData.update("currentOrganization", (value) => organization);
+      print(userData);
+
+      // await Hive.box(kUserBox).put(currentUserId, userData);
+
+      // Navigator.of(context)
+      //     .pushNamedAndRemoveUntil(kMainScreen, (route) => false);
+      print(await response.stream.bytesToString());
+    } catch (error) {
+      print("error is $error");
     }
   }
 }

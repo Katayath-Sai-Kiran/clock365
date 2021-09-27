@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
 class UserSignInScreen extends StatefulWidget {
@@ -19,10 +20,7 @@ class UserSignInScreen extends StatefulWidget {
 class _UserSignInScreenState extends State<UserSignInScreen> {
   final TextEditingController _orgNameController = TextEditingController();
   final FocusNode _orgNameFocusNode = FocusNode();
-  final List<Map> organizations = [
-    {"name": "Wielabs"},
-    {"name": "Xavior School"},
-  ];
+
   bool _isTermsAndConditionChecked = false;
   Map _selectedOrganization = {};
 
@@ -32,7 +30,6 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
 
     _orgNameFocusNode.addListener(onFocusChange);
   }
- 
 
   void onFocusChange() {
     setState(() {});
@@ -60,7 +57,6 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
                       height: 32,
                     ),
                     TypeAheadField(
-                      getImmediateSuggestions: true,
                       loadingBuilder: (_) {
                         return CircularProgressIndicator();
                       },
@@ -69,18 +65,24 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
                         textInputAction: TextInputAction.done,
                       ),
                       suggestionsCallback: (pattern) async {
-                        return organizations;
+                        List<Map> matchedOrganizations =
+                            await organizationRepository
+                                .getOrganizationSuggetions(pattern: pattern);
+                        if (matchedOrganizations.length > 0) {
+                          return matchedOrganizations;
+                        } else {
+                          return [
+                            {"name": "No organizations found"}
+                          ];
+                        }
                       },
-                      itemBuilder: (_, Map organization) {
+                      itemBuilder: (BuildContext context, Map organization) {
                         return SearchOrganizationItem(
                             organization: organization);
                       },
-                      onSuggestionSelected: (Map organization) {
-                        setState(() {
-                          _orgNameController.text = organization["name"];
-                          _selectedOrganization = organization;
-                          
-                        });
+                      onSuggestionSelected: (Map organization) async {
+                        staffSelectOrganization(
+                            selectedOrganization: organization);
                       },
                     ),
                     SizedBox(
@@ -117,8 +119,10 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
                       onPressed: () {
                         if (_orgNameController.text.isNotEmpty) {
                           if (_isTermsAndConditionChecked) {
-                            Navigator.of(context)
-                                .pushNamed(kUserConfirmSignInScreen);
+                            Navigator.of(context).pushNamed(
+                              kUserConfirmSignInScreen,
+                              arguments: _selectedOrganization,
+                            );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -146,6 +150,16 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
       ),
     );
   }
+
+  Future staffSelectOrganization({required Map selectedOrganization}) async {
+    String currentUserId = Hive.box(kUserBox).get(kcurrentUserId);
+    print(
+        "current Offline user is ${Hive.box(kUserBox).get(currentUserId)["currentOrganization"]}");
+    setState(() {
+      _orgNameController.text = selectedOrganization["name"];
+      _selectedOrganization = selectedOrganization;
+    });
+  }
 }
 
 class SearchOrganizationItem extends StatelessWidget {
@@ -154,6 +168,10 @@ class SearchOrganizationItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: organization.isEmpty ||
+              organization["name"] == "No organizations found"
+          ? 40
+          : null,
       padding: EdgeInsets.only(left: 16),
       decoration: BoxDecoration(
           border: Border.all(
@@ -163,20 +181,24 @@ class SearchOrganizationItem extends StatelessWidget {
         children: [
           Expanded(
               child: Text(
-            organization["name"],
+            organization.isEmpty
+                ? "No organizations found"
+                : organization["name"],
             style: Theme.of(context).textTheme.bodyText1,
           )),
           SizedBox(
             width: 16,
           ),
-          IconButton(
-            onPressed: () {},
-            icon: SizedBox(
-              height: 24,
-              width: 24,
-              child: SvgPicture.asset('assets/add_user.svg'),
+          if (organization.isNotEmpty &&
+              organization["name"] != "No organizations found")
+            IconButton(
+              onPressed: () {},
+              icon: SizedBox(
+                height: 24,
+                width: 24,
+                child: SvgPicture.asset('assets/add_user.svg'),
+              ),
             ),
-          )
         ],
       ),
     );

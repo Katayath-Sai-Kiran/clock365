@@ -51,6 +51,7 @@ class OrganizationRepository extends ChangeNotifier {
       List updatedCurrentOrgs = [];
       Map currentOfflineOrganization =
           Hive.box(kUserBox).get(userId)["currentOrganization"];
+
       List currentOfflineOrganizationStaff =
           currentOfflineOrganization["staff"] ?? [];
 
@@ -58,6 +59,7 @@ class OrganizationRepository extends ChangeNotifier {
         (key, organization) {
           if (organization["_id"]["\$oid"] == organizationId) {
             List currentStaff = organization["staff"];
+
             organization["staff"] = [user, ...currentStaff];
 
             currentOfflineOrganizationStaff.add([user, ...currentStaff]);
@@ -74,9 +76,12 @@ class OrganizationRepository extends ChangeNotifier {
       currentUser.organizations = updatedCurrentOrgs;
 
       userData.update("currentUser", (value) => currentUser);
+
       userData.update(
           "currentOrganization", (value) => currentOfflineOrganization);
+
       await Hive.box(kUserBox).put(userId, userData);
+      
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -107,6 +112,51 @@ class OrganizationRepository extends ChangeNotifier {
           content: Text(result["msg"]),
         ),
       );
+
+      final String userId = Hive.box(kUserBox).get(kcurrentUserId);
+      Map currentOfflineUserData = Hive.box(kUserBox).get(userId);
+      ClockUser currentOfflineUser = currentOfflineUserData["currentUser"];
+      List? currentUserOrganizations = currentOfflineUser.organizations;
+
+      List updatedCurrentOrgs = [];
+
+      Map currentOfflineOrganization =
+          Hive.box(kUserBox).get(userId)["currentOrganization"];
+
+      List currentOfflineOrganizationStaff =
+          currentOfflineOrganization["staff"] ?? [];
+
+      currentUserOrganizations!.asMap().forEach(
+        (key, organization) {
+          if (organization["_id"]["\$oid"] == organizationId) {
+            List<ClockUser> currentOfflineStaff = organization["staff"];
+
+            currentOfflineStaff.removeWhere(
+                (currentOfflineUser) => currentOfflineUser.id == user.id);
+
+            organization["staff"] = [...currentOfflineStaff];
+
+            currentOfflineOrganizationStaff.add([...currentOfflineStaff]);
+
+            updatedCurrentOrgs.add(organization);
+          } else {
+            updatedCurrentOrgs.add(organization);
+          }
+        },
+      );
+      currentOfflineOrganization.update(
+          "staff", (value) => currentOfflineOrganizationStaff);
+
+      currentOfflineUser.organizations = updatedCurrentOrgs;
+
+      currentOfflineUserData.update(
+          "currentUser", (value) => currentOfflineUser);
+
+      currentOfflineUserData.update(
+          "currentOrganization", (value) => currentOfflineOrganization);
+
+      await Hive.box(kUserBox).put(userId, currentOfflineUserData);
+      
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -143,13 +193,10 @@ class OrganizationRepository extends ChangeNotifier {
 
         List? previousOrganizations = currentUser.organizations;
 
-        print("previous organizations are $previousOrganizations");
-
         List updatedOrganizations = [
           organizationData,
           ...previousOrganizations!
         ];
-        print("previous updatedOrganizations are $updatedOrganizations");
 
         clockUserProvider.setOwner(updatedUser: currentUser);
 
@@ -187,6 +234,29 @@ class OrganizationRepository extends ChangeNotifier {
         body: jsonEncode({"org_id": "", "user_id": "", "signin_type": 1}),
         headers: headers,
       );
-    } catch (error) {}
+      print("staff signed In $staffSignInresponse");
+    } catch (error) {
+      print("error while staff singing $error");
+    }
+  }
+
+  Future<List<Map>> getOrganizationSuggetions({required String pattern}) async {
+    try {
+      final String getOrgsUrl = "$kBaseUrl/api/v1/org/$pattern/suggestions";
+      http.Response response = await http.get(Uri.parse(getOrgsUrl));
+      List organizations = [];
+      List<Map> parsedOrganizations = [{}];
+      if (response.statusCode == 200) {
+        organizations = jsonDecode(response.body);
+        parsedOrganizations.clear();
+        organizations.forEach((organization) {
+          parsedOrganizations.add(organization as Map);
+        });
+      }
+      return parsedOrganizations;
+    } catch (error) {
+      print(error);
+      return [{}];
+    }
   }
 }

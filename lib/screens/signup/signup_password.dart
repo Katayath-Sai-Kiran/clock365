@@ -26,7 +26,7 @@ class _SignupPasswordScreenState extends State<SignupPasswordScreen> {
   final GlobalKey<FormFieldState> _createPasswordKey =
       GlobalKey<FormFieldState>();
 
-  Map? userData = {};
+  Map userData = {};
 
   @override
   void initState() {
@@ -69,7 +69,7 @@ class _SignupPasswordScreenState extends State<SignupPasswordScreen> {
                               Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 16),
                                   child: Text(
-                                    'Hello\n${userData!["name"]}',
+                                    'Hello\n${userData["name"]}',
                                     style: Theme.of(context)
                                         .textTheme
                                         .headline4
@@ -159,17 +159,11 @@ class _SignupPasswordScreenState extends State<SignupPasswordScreen> {
         _confirmPasswordKey.currentState?.validate() == true &&
         password == confirmPassword) {
       print(userData);
-      Map data = {
-        "mail": userData!["mail"],
-        "job_title": userData!["job_title"],
-        "name": userData!["name"],
-        "orgName": userData!["organization"],
-        "website": userData!["website"],
-      };
+  
       await userRepository.signUpClockUser(
         context: context,
         password: password,
-        data: data,
+        data: userData,
       );
 
       _createPasswordController.clear();

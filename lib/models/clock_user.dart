@@ -38,6 +38,7 @@ class ClockUser {
       jobTitle: json["job_title"],
       name: json["name"],
       organizations: json["organizations"],
+      website: json["website"],
     );
   }
 }

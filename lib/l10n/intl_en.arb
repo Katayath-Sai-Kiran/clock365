@@ -41,4 +41,5 @@
     "nameOfSite" : "Name of Site",
     "selectedOrganizations" : "Selected Organizations",
     "plaeseAcceptTerms" : "Please accept Teams and Conditions",
+    "noOrgsFound" : "No organizations found"
 }
