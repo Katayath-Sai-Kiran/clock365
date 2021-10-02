@@ -1,23 +1,19 @@
 import 'package:clock365/constants.dart';
 import 'package:clock365/generated/l10n.dart';
 import 'package:clock365/models/clock_user.dart';
+import 'package:clock365/screens/dashboard/captureV_visitor_photo.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:clock365/models/OrganizationModel.dart';
 
-class UserConfirmSignInScreen extends StatefulWidget {
-  const UserConfirmSignInScreen({Key? key}) : super(key: key);
+class VisitorSignInConfirm extends StatelessWidget {
+  final OrganizationModel? selectedOrganization;
 
-  @override
-  _UserConfirmSignInScreenState createState() =>
-      _UserConfirmSignInScreenState();
-}
+  VisitorSignInConfirm({required this.selectedOrganization});
 
-class _UserConfirmSignInScreenState extends State<UserConfirmSignInScreen> {
   @override
   Widget build(BuildContext context) {
-    OrganizationModel selectedOrganization =
-        ModalRoute.of(context)!.settings.arguments as OrganizationModel;
     return Scaffold(
       appBar: AppBar(
         title: Text(S.of(context).signInDetails),
@@ -55,10 +51,10 @@ class _UserConfirmSignInScreenState extends State<UserConfirmSignInScreen> {
                       Container(
                           alignment: Alignment.bottomCenter,
                           child: ElevatedButton(
-                            onPressed: () => {
-                              Navigator.of(context).pushNamed(
-                                  kCapturePhotoScreen,
-                                  arguments: selectedOrganization)
+                            onPressed: () {
+                              Get.to(() => CaptureVisitorPhoto(
+                                    selectedOrganization: selectedOrganization,
+                                  ));
                             },
                             child: Text(
                               S.of(context).actionContinue,

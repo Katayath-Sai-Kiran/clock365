@@ -1,3 +1,4 @@
+import 'package:clock365/customWidgets.dart';
 import 'package:clock365/elements/semi_circle.dart';
 import 'package:clock365/providers/user_provider.dart';
 import 'package:clock365/repository/userRepository.dart';
@@ -13,6 +14,7 @@ class SignupPasswordScreen extends StatefulWidget {
 }
 
 class _SignupPasswordScreenState extends State<SignupPasswordScreen> {
+  final CustomWidgets _customWidgets = CustomWidgets();
   final TextEditingController _createPasswordController =
       TextEditingController();
   final TextEditingController _confirmPasswordController =
@@ -159,12 +161,18 @@ class _SignupPasswordScreenState extends State<SignupPasswordScreen> {
         _confirmPasswordKey.currentState?.validate() == true &&
         password == confirmPassword) {
       print(userData);
-  
-      await userRepository.signUpClockUser(
+
+      String? response = await userRepository.signUpClockUser(
         context: context,
         password: password,
         data: userData,
       );
+      if (response == "done") {
+        _customWidgets.successToste(
+            text: "Successfully signed up", context: context);
+        _createPasswordController.clear();
+        _confirmPasswordController.clear();
+      }
 
       _createPasswordController.clear();
       _confirmPasswordController.clear();

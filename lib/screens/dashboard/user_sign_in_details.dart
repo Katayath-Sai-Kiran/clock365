@@ -1,5 +1,8 @@
 import 'package:clock365/constants.dart';
+import 'package:clock365/customWidgets.dart';
 import 'package:clock365/generated/l10n.dart';
+import 'package:clock365/models/OrganizationModel.dart';
+import 'package:clock365/models/clock_user.dart';
 import 'package:clock365/repository/organization_repository.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/cupertino.dart';
@@ -20,9 +23,10 @@ class UserSignInScreen extends StatefulWidget {
 class _UserSignInScreenState extends State<UserSignInScreen> {
   final TextEditingController _orgNameController = TextEditingController();
   final FocusNode _orgNameFocusNode = FocusNode();
+  final CustomWidgets _customWidgets = CustomWidgets();
 
   bool _isTermsAndConditionChecked = false;
-  Map _selectedOrganization = {};
+  OrganizationModel? _selectedOrganization;
 
   @override
   void initState() {
@@ -42,6 +46,8 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
   Widget build(BuildContext context) {
     final OrganizationRepository organizationRepository =
         Provider.of(context, listen: false);
+    final double _width = MediaQuery.of(context).size.width;
+    final double _height = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         title: Text(S.of(context).signInDetails),
@@ -56,7 +62,7 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
                     SizedBox(
                       height: 32,
                     ),
-                    TypeAheadField(
+                    TypeAheadField<OrganizationModel>(
                       loadingBuilder: (_) {
                         return CircularProgressIndicator();
                       },
@@ -65,24 +71,36 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
                         textInputAction: TextInputAction.done,
                       ),
                       suggestionsCallback: (pattern) async {
-                        List<Map> matchedOrganizations =
+                        List<OrganizationModel> matchedOrganizations =
                             await organizationRepository
                                 .getOrganizationSuggetions(pattern: pattern);
                         if (matchedOrganizations.length > 0) {
                           return matchedOrganizations;
                         } else {
                           return [
-                            {"name": "No organizations found"}
+                            OrganizationModel(
+                                organizationName: "No organizations found"),
                           ];
                         }
                       },
-                      itemBuilder: (BuildContext context, Map organization) {
+                      itemBuilder: (BuildContext context,
+                          OrganizationModel organization) {
                         return SearchOrganizationItem(
                             organization: organization);
                       },
-                      onSuggestionSelected: (Map organization) async {
-                        staffSelectOrganization(
-                            selectedOrganization: organization);
+                      onSuggestionSelected:
+                          (OrganizationModel selectedOrganization) async {
+                        setState(() {
+                          if (selectedOrganization.organizationName ==
+                              "No organizations found") {
+                            _orgNameController.text = "";
+                          } else {
+                            _orgNameController.text = selectedOrganization
+                                .organizationName
+                                .toString();
+                            _selectedOrganization = selectedOrganization;
+                          }
+                        });
                       },
                     ),
                     SizedBox(
@@ -119,22 +137,207 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
                       onPressed: () {
                         if (_orgNameController.text.isNotEmpty) {
                           if (_isTermsAndConditionChecked) {
-                            Navigator.of(context).pushNamed(
-                              kUserConfirmSignInScreen,
-                              arguments: _selectedOrganization,
-                            );
+                            ClockUser curentUser =
+                                Hive.box(kUserBox).get(kCurrentUserKey);
+
+                            bool _isLoggingInCurrentOrg =
+                                _selectedOrganization!.organizationId ==
+                                        curentUser
+                                            .currentOrganization!.organizationId
+                                    ? true
+                                    : false;
+
+                            if (_isLoggingInCurrentOrg) {
+                              //signinig into current organization
+                              if (_selectedOrganization!.staffSignIn == true) {
+                                List<ClockUser>? selectedOrganizationStaff =
+                                    _selectedOrganization!.staff;
+
+                                bool _canSignIn = false;
+                                selectedOrganizationStaff?.forEach((element) {
+                                  if (element.id == curentUser.id) {
+                                    _canSignIn = true;
+                                  }
+                                  if (_canSignIn) {
+                                    Navigator.of(context).pushNamed(
+                                      kUserConfirmSignInScreen,
+                                      arguments: _selectedOrganization,
+                                    );
+                                  } else {
+                                    _customWidgets.failureToste(
+                                        text:
+                                            "You are not registered with ${_selectedOrganization?.organizationName}",
+                                        context: context);
+                                  }
+                                });
+                              } else {
+                                _customWidgets.failureToste(
+                                    text:
+                                        "Staff Cannot SignIn Into ${_selectedOrganization!.organizationName}",
+                                    context: context);
+                              }
+                            } else {
+                              //signing into new orgniazation
+                              if (_selectedOrganization!.staffSignIn == true) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    backgroundColor: Colors.white,
+                                    elevation: 8.0,
+                                    behavior: SnackBarBehavior.floating,
+                                    content: Container(
+                                      height: 100,
+                                      width: _width,
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceAround,
+                                        children: [
+                                          Text(
+                                            "Are you sure to logout !",
+                                            style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
+                                            ),
+                                          ),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceAround,
+                                            children: [
+                                              Container(
+                                                width: _width * 0.3,
+                                                height: _height * 0.05,
+                                                child: OutlinedButton(
+                                                  style: ButtonStyle(
+                                                    backgroundColor:
+                                                        MaterialStateProperty
+                                                            .all(Colors.white),
+                                                    side: MaterialStateProperty
+                                                        .all(BorderSide(
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .primary,
+                                                    )),
+                                                  ),
+                                                  onPressed: () {
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .hideCurrentSnackBar();
+
+                                                    //Scaffold.of(context).is
+                                                  },
+                                                  child: Text(
+                                                    "Cancle",
+                                                    style: TextStyle(
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .primary),
+                                                  ),
+                                                ),
+                                              ),
+                                              Container(
+                                                width: _width * 0.3,
+                                                height: _height * 0.05,
+                                                child: OutlinedButton(
+                                                  style: ButtonStyle(
+                                                    backgroundColor:
+                                                        MaterialStateProperty
+                                                            .all(Theme.of(
+                                                                    context)
+                                                                .colorScheme
+                                                                .primary),
+                                                  ),
+                                                  onPressed: () {
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .hideCurrentSnackBar();
+                                                    List<ClockUser>?
+                                                        selectedOrganizationStaff =
+                                                        _selectedOrganization!
+                                                            .staff;
+
+                                                    bool _canSignIn = false;
+                                                    selectedOrganizationStaff
+                                                        ?.forEach((element) {
+                                                      if (element.id ==
+                                                          curentUser.id) {
+                                                        _canSignIn = true;
+                                                      }
+                                                      if (_canSignIn) {
+                                                        Navigator.of(context)
+                                                            .pushNamed(
+                                                          kUserConfirmSignInScreen,
+                                                          arguments:
+                                                              _selectedOrganization,
+                                                        );
+                                                      } else {
+                                                        _customWidgets.failureToste(
+                                                            text:
+                                                                "You are not registered with ${_selectedOrganization?.organizationName}",
+                                                            context: context);
+                                                      }
+                                                    });
+                                                  },
+                                                  child: Text("Logout"),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    margin: EdgeInsets.all(16.0),
+                                  ),
+                                );
+                              } else {
+                                _customWidgets.failureToste(
+                                    text:
+                                        "Staff Cannot SignIn Into ${_selectedOrganization!.organizationName}",
+                                    context: context);
+                              }
+                            }
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content:
-                                    Text("plaese accept Terms and Conditions"),
+                                margin: EdgeInsets.all(16.0),
+                                behavior: SnackBarBehavior.floating,
+                                content: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.warning_amber_outlined,
+                                      color: Colors.orange,
+                                    ),
+                                    SizedBox(
+                                      width: 16.0,
+                                    ),
+                                    Flexible(
+                                      child: Text(
+                                          "please accept Terms and Conditions"),
+                                    ),
+                                  ],
+                                ),
                               ),
                             );
                           }
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text("Organization Cannot be Empty"),
+                              duration: Duration(milliseconds: 2000),
+                              margin: EdgeInsets.all(16.0),
+                              behavior: SnackBarBehavior.floating,
+                              content: Row(
+                                children: [
+                                  Icon(
+                                    Icons.warning_amber_outlined,
+                                    color: Colors.orange,
+                                  ),
+                                  SizedBox(
+                                    width: 16.0,
+                                  ),
+                                  Flexible(
+                                      child:
+                                          Text("Organization cannot be empty")),
+                                ],
+                              ),
                             ),
                           );
                         }
@@ -153,25 +356,36 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
 
   Future staffSelectOrganization({required Map selectedOrganization}) async {
     String currentUserId = Hive.box(kUserBox).get(kcurrentUserId);
-    print(
-        "current Offline user is ${Hive.box(kUserBox).get(currentUserId)["currentOrganization"]}");
-    setState(() {
-      _orgNameController.text = selectedOrganization["name"];
-      _selectedOrganization = selectedOrganization;
-    });
+    Map currentOfflineUser = Hive.box(kUserBox).get(currentUserId) ?? {};
+    Map currentOrganization = currentOfflineUser["currentOrganization"] ?? {};
+    bool _isLoggingInCurrentOrg = selectedOrganization["_id"]["\$oid"] ??
+        "" == currentOrganization["_id"]["\$oid"] ??
+        "currentOrganizationId";
+    if (_isLoggingInCurrentOrg) {
+      setState(() {});
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(milliseconds: 2000),
+          elevation: 8.0,
+          behavior: SnackBarBehavior.floating,
+          content: Container(
+            child: Text(""),
+          ),
+          margin: EdgeInsets.all(16.0),
+        ),
+      );
+    }
   }
 }
 
 class SearchOrganizationItem extends StatelessWidget {
-  final Map organization;
+  final OrganizationModel organization;
   SearchOrganizationItem({required this.organization});
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: organization.isEmpty ||
-              organization["name"] == "No organizations found"
-          ? 40
-          : null,
+      height: 50.0,
       padding: EdgeInsets.only(left: 16),
       decoration: BoxDecoration(
           border: Border.all(
@@ -181,16 +395,14 @@ class SearchOrganizationItem extends StatelessWidget {
         children: [
           Expanded(
               child: Text(
-            organization.isEmpty
-                ? "No organizations found"
-                : organization["name"],
+            organization.organizationName.toString(),
             style: Theme.of(context).textTheme.bodyText1,
           )),
           SizedBox(
             width: 16,
           ),
-          if (organization.isNotEmpty &&
-              organization["name"] != "No organizations found")
+          if (organization.organizationName.toString() ==
+              "No organizations found")
             IconButton(
               onPressed: () {},
               icon: SizedBox(

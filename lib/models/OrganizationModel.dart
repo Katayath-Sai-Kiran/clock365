@@ -2,7 +2,7 @@ import 'package:clock365/constants.dart';
 import 'package:clock365/models/clock_user.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-//part 'OrganizationModel.dart';
+part 'OrganizationModel.g.dart';
 
 @HiveType(typeId: kOrganizationModel)
 class OrganizationModel {
@@ -43,7 +43,7 @@ class OrganizationModel {
     return OrganizationModel(
       colorCode: json["color_code"],
       colorOpacity: json["color_opacity"],
-      createdBy: json["created_by"],
+      createdBy: json["created_by"]["\$oid"],
       organizationId: json["_id"]["\$oid"],
       organizationName: json["name"],
       staff: json["staff"],
@@ -51,9 +51,6 @@ class OrganizationModel {
       staffSignedIn: json["staff_signed_in"],
       visitorSignIn: json["visitor_sign_in"],
       visitorsSignedIn: json["visitors_signed_in"],
-
     );
   }
-
-  
 }

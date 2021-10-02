@@ -1,4 +1,5 @@
 import 'package:clock365/constants.dart';
+import 'package:clock365/models/OrganizationModel.dart';
 import 'package:clock365/models/clock_user.dart';
 import 'package:clock365/models/organization.dart';
 import 'package:clock365/providers/organization_provider.dart';
@@ -7,25 +8,23 @@ import 'package:clock365/repository/userRepository.dart';
 import 'package:clock365/route_generator.dart';
 import 'package:clock365/screens/login/login_screen.dart';
 import 'package:clock365/screens/main/main_screen.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'generated/l10n.dart';
 import 'package:clock365/theme/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
+import 'generated/l10n.dart';
 import 'repository/organization_repository.dart';
 
 void main() async {
   await Hive.initFlutter();
-
   Hive.registerAdapter(ClockUserAdapter());
   Hive.registerAdapter(OrganizationAdapter());
+  Hive.registerAdapter(OrganizationModelAdapter());
 
-  await Hive.openBox<ClockUser>(kClockUserBox);
-  await Hive.openBox(kUserIdBuffer);
   await Hive.openBox<dynamic>(kUserBox);
-  await Hive.openBox<ClockUser>(kClockUserBox);
 
   runApp(Clock365App());
 }
@@ -47,9 +46,7 @@ class _Clock365AppState extends State<Clock365App> {
   Widget build(BuildContext context) {
     double colorIntensity = 1.0;
     String colorCode = "0xFF6756D8";
-    bool? isLoggedIn = false;
 
-    List? organizations = [];
 
     Map themeData = {
       "primaryColor": colorCode,
@@ -66,22 +63,34 @@ class _Clock365AppState extends State<Clock365App> {
       child: ValueListenableBuilder(
         valueListenable: Hive.box<dynamic>(kUserBox).listenable(),
         builder: (context, Box box, child) {
-          String? currentUserId = box.get(kcurrentUserId);
+          bool? _isLoggedIn = box.get("isLoggedIn") ?? false;
 
-          if (currentUserId != null) {
-            final Map userData = box.get(currentUserId);
-            final Map currentOrganization = userData["currentOrganization"];
-          
-            ClockUser user = userData["currentUser"];
-            organizations = user.organizations ?? [];
+          if (_isLoggedIn == true) {
+            //user is already logged in
+            ClockUser? loggedInUser = box.get(kCurrentUserKey);
+            OrganizationModel? currentOrganization =
+                loggedInUser!.currentOrganization;
+
             themeData = {
-              "primaryColor": currentOrganization["color_code"],
-              "colorIntensity": currentOrganization["color_opacity"],
+              "colorIntensity": currentOrganization?.colorOpacity,
+              "primaryColor": currentOrganization?.colorCode,
             };
-            isLoggedIn = userData["loginDetails"]["isLoggedIn"] ?? false;
+          } else {
+            ClockUser? loggedInUser = box.get(kCurrentUserKey);
+            if (loggedInUser != null) {
+              OrganizationModel? currentOrganization =
+                  loggedInUser.currentOrganization;
+              themeData = {
+                "colorIntensity": currentOrganization?.colorOpacity,
+                "primaryColor": currentOrganization?.colorCode,
+              };
+            }
+          
+
           }
 
-          return MaterialApp(
+          // ClockUser currentUser = box.get(kCurrentUserKey);
+          return GetMaterialApp(
             debugShowCheckedModeBanner: false,
             localizationsDelegates: [
               S.delegate,
@@ -98,14 +107,14 @@ class _Clock365AppState extends State<Clock365App> {
                 int.parse(themeData["primaryColor"] ?? colorCode),
               ),
             ),
-            home: currentUserId == null
-                ? LoginScreen()
-                : isLoggedIn == true && organizations!.length > 0
-                    ? MainScreen()
-                    : LoginScreen(),
+            home: _isLoggedIn == true ? MainScreen() : LoginScreen(),
           );
         },
       ),
     );
   }
 }
+
+
+
+              

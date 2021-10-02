@@ -1,0 +1,6 @@
+{
+    "files.autoSave": "afterDelay",
+    "editor.bracketPairColorization.enabled": true,
+    "editor.codeActionsOnSave": null,
+    "editor.renderControlCharacters": true
+}

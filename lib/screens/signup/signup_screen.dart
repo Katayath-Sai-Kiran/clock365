@@ -1,8 +1,8 @@
+import 'package:clock365/customWidgets.dart';
 import 'package:clock365/elements/semi_circle.dart';
 import 'package:clock365/repository/userRepository.dart';
 import 'package:clock365/screens/signup/otp_bottom_sheet.dart';
 import 'package:clock365/theme/colors.dart';
-import 'package:clock365/utils/customWidgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -27,9 +27,9 @@ class _SignupScreenState extends State<SignupScreen> {
   final GlobalKey<FormFieldState> _mailKey = GlobalKey<FormFieldState>();
   final GlobalKey<FormFieldState> _confirmMailKey = GlobalKey<FormFieldState>();
   final GlobalKey<FormFieldState> _jobTitleKey = GlobalKey<FormFieldState>();
-  
+
   bool? _isTermsAndConditionChecked = false;
-  bool isLoading = false;
+  bool _isLoading = false;
 
   final CustomWidgets _customWidgets = CustomWidgets();
 
@@ -51,7 +51,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: isLoading
+      body: _isLoading
           ? Center(
               child: CircularProgressIndicator(),
             )
@@ -203,14 +203,19 @@ class _SignupScreenState extends State<SignupScreen> {
     if (_mailKey.currentState!.validate() == true &&
         _confirmMailKey.currentState!.validate()) {
       if (_isTermsAndConditionChecked == true) {
-        String res =
+        setState(() {
+          _isLoading = true;
+        });
+        String? res =
             await userRepository.generateOTP(mail: mail, context: context);
+        setState(() {
+          _isLoading = false;
+        });
         if (res == "done") {
           _businessEmailConfirmController.clear();
           _businessEmailController.clear();
           _jobTitleController.clear();
-          _customWidgets.snacbar(
-              context: context, text: "Verification email sent.");
+
           showModalBottomSheet(
               context: context,
               isScrollControlled: true,
@@ -223,13 +228,11 @@ class _SignupScreenState extends State<SignupScreen> {
                 return OTPBottomSheet(mail: mail, jobTitle: jobTitle);
               });
         } else {
-          _customWidgets.snacbar(
-              text: "Please enter a valid email", context: context);
           _businessEmailConfirmController.clear();
           _businessEmailController.clear();
         }
       } else {
-        _customWidgets.snacbar(
+        _customWidgets.failureToste(
             text: "Please accept terms and conditions", context: context);
       }
     }

@@ -1,13 +1,16 @@
 import 'package:clock365/constants.dart';
 import 'package:clock365/generated/l10n.dart';
+import 'package:clock365/models/OrganizationModel.dart';
+import 'package:clock365/models/clock_user.dart';
 import 'package:clock365/providers/organization_provider.dart';
-import 'package:clock365/providers/user_provider.dart';
 import 'package:clock365/repository/organization_repository.dart';
+import 'package:clock365/repository/userRepository.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
 class LocationScreen extends StatefulWidget {
@@ -39,10 +42,10 @@ class _LocationScreenState extends State<LocationScreen> {
   Widget build(BuildContext context) {
     Map themeData = ModalRoute.of(context)!.settings.arguments as Map;
 
-    OrganizationRepository organizationRepository =
-        Provider.of<OrganizationRepository>(context, listen: false);
     final Color selectedColor = Color(int.parse(themeData["primaryColor"]))
         .withOpacity(themeData["colorIntensity"]);
+    OrganizationRepository organizationRepository =
+        Provider.of<OrganizationRepository>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
@@ -73,19 +76,10 @@ class _LocationScreenState extends State<LocationScreen> {
                       controller: _orgNameController,
                       textInputAction: TextInputAction.done,
                     ),
-                    suggestionsCallback: (pattern) async {
-                      List<Map> matchedOrganizations =
-                          await organizationRepository
-                              .getOrganizationSuggetions(pattern: pattern);
-                      if (matchedOrganizations.length > 0) {
-                        return matchedOrganizations;
-                      } else {
-                        return [
-                          {"name": _orgNameController.text.toString()}
-                        ];
-                      }
-                    },
-                    itemBuilder: (BuildContext context, Map organization) {
+                    suggestionsCallback: (pattern) =>
+                        getSuggestions(pattern: pattern),
+                    itemBuilder:
+                        (BuildContext context, OrganizationModel organization) {
                       return SearchOrganizationItem(
                         organization: organization,
                         orgNameController: _orgNameController,
@@ -94,11 +88,8 @@ class _LocationScreenState extends State<LocationScreen> {
                         themeData: themeData,
                       );
                     },
-                    onSuggestionSelected: (Map organization) async {
-                      registerOrganization(
-                          themeData: themeData,
-                          organizationRepository: organizationRepository);
-                    }),
+                    onSuggestionSelected:
+                        (OrganizationModel organization) async {}),
                 SizedBox(
                   height: 24,
                 ),
@@ -119,7 +110,9 @@ class _LocationScreenState extends State<LocationScreen> {
                 SizedBox(
                   height: 24,
                 ),
-                YourSites()
+                YourSites(
+                  themeData: themeData,
+                )
               ],
             ),
           ),
@@ -128,10 +121,28 @@ class _LocationScreenState extends State<LocationScreen> {
     );
   }
 
-  void registerOrganization({
+  Future<List<OrganizationModel>> getSuggestions(
+      {required String pattern}) async {
+    OrganizationRepository organizationRepository =
+        Provider.of<OrganizationRepository>(context, listen: false);
+    List<OrganizationModel> matchedOrganizations = await organizationRepository
+        .getOrganizationSuggetions(pattern: pattern);
+    if (matchedOrganizations.length > 0) {
+      return matchedOrganizations;
+    } else {
+      return [
+        OrganizationModel(organizationName: _orgNameController.text.toString()),
+      ];
+    }
+  }
+
+  void registersdfOrganization({
+    required Map selectedOrganization,
     required Map themeData,
     required OrganizationRepository organizationRepository,
   }) async {
+    print("called");
+    print(selectedOrganization);
     String orgName = _orgNameController.text.toString();
 
     if (_orgNameKey.currentState?.validate() == true) {
@@ -145,7 +156,6 @@ class _LocationScreenState extends State<LocationScreen> {
           "color_opacity": themeData["colorIntensity"],
           "created_by": oId,
         },
-        oId: oId,
         context: context,
       );
 
@@ -155,7 +165,8 @@ class _LocationScreenState extends State<LocationScreen> {
 }
 
 class YourSites extends StatefulWidget {
-  YourSites({Key? key}) : super(key: key);
+  final Map themeData;
+  YourSites({Key? key, required this.themeData}) : super(key: key);
 
   @override
   _YourSitesState createState() => _YourSitesState();
@@ -164,34 +175,46 @@ class YourSites extends StatefulWidget {
 class _YourSitesState extends State<YourSites> {
   @override
   Widget build(BuildContext context) {
-    return Consumer<ClockUserProvider>(
-        builder: (context, ClockUserProvider userRepository, _) {
-      List? organizations = userRepository.owner!.organizations ?? [];
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            S.of(context).yourSites,
-            style: Theme.of(context).textTheme.headline6?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          SizedBox(
-            height: 8,
-          ),
-          ListView.builder(
-            padding: EdgeInsets.only(bottom: 96),
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            itemCount: organizations.length,
-            itemBuilder: (context, index) => SiteItem(
-              organization: organizations[index],
+    ClockUser currentUser = Hive.box(kUserBox).get(kCurrentUserKey);
+    final UserRepository userRepository =
+        Provider.of<UserRepository>(context, listen: false);
+    return FutureBuilder(
+      future: userRepository.getCurrentSites(userId: currentUser.id.toString()),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+        List<OrganizationModel> organizations = snapshot.data;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              S.of(context).yourSites,
+              style: Theme.of(context).textTheme.headline6?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
-          ),
-        ],
-      );
-    });
+            SizedBox(
+              height: 8,
+            ),
+            ListView.builder(
+              padding: EdgeInsets.only(bottom: 96),
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: organizations.length,
+              itemBuilder: (context, index) => SiteItem(
+                organization: organizations[index],
+                themeData: widget.themeData,
+              ),
+            )
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -201,8 +224,9 @@ class LocationOptionArguments {
 }
 
 class SiteItem extends StatefulWidget {
-  final Map organization;
-  SiteItem({required this.organization});
+  final OrganizationModel organization;
+  final Map themeData;
+  SiteItem({required this.organization, required this.themeData});
   @override
   _SiteItemState createState() => _SiteItemState();
 }
@@ -210,8 +234,8 @@ class SiteItem extends StatefulWidget {
 class _SiteItemState extends State<SiteItem> {
   @override
   Widget build(BuildContext context) {
-    final OrganizationProvider organizationProvider =
-        Provider.of<OrganizationProvider>(context, listen: false);
+    final OrganizationRepository organizationProvider =
+        Provider.of<OrganizationRepository>(context, listen: false);
     return Container(
       margin: EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
@@ -220,17 +244,21 @@ class _SiteItemState extends State<SiteItem> {
       child: InkWell(
         onTap: () async {
           await organizationProvider.setCurrentOrganization(
+              colorCode: widget.themeData["primaryColor"],
+              colorOpasity: widget.themeData["colorIntensity"],
               updatedOrganization: widget.organization);
 
           Navigator.of(context).pushNamed(kLocationOptionsRoute, arguments: {
-            "orgnization": widget.organization,
+            "organization": widget.organization,
           });
         },
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
-              Expanded(child: Text(widget.organization["name"] ?? "name")),
+              Expanded(
+                  child: Text(widget.organization.organizationName ??
+                      "organization name")),
               SizedBox(
                 width: 16,
               ),
@@ -244,7 +272,7 @@ class _SiteItemState extends State<SiteItem> {
 }
 
 class SearchOrganizationItem extends StatelessWidget {
-  final Map organization;
+  final OrganizationModel organization;
   final TextEditingController orgNameController;
   final Color selectedColor;
   final OrganizationRepository organizationRepository;
@@ -258,29 +286,13 @@ class SearchOrganizationItem extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    final String orgname = orgNameController.text.toString();
     return InkWell(
-      onTap: () async {
-        String orgName = orgNameController.text.toString();
-
-        Box userBox = await Hive.openBox(kUserBox);
-        String oId = userBox.get(kcurrentUserId);
-
-        await organizationRepository.registerOrganization(
-          data: {
-            "name": orgName,
-            "color_code": themeData["primaryColor"],
-            "color_opacity": themeData["colorIntensity"],
-            "created_by": oId,
-          },
-          oId: oId,
-          context: context,
-        );
-
-        orgNameController.clear();
-      },
+      onTap: () => selectSuggestion(
+        context: context,
+        organization: organization,
+      ),
       child: Container(
-        height: organization.isEmpty ? 50 : null,
+        height: 50,
         padding: EdgeInsets.only(left: 16),
         decoration: BoxDecoration(
             border: Border.all(
@@ -290,13 +302,15 @@ class SearchOrganizationItem extends StatelessWidget {
           children: [
             Expanded(
                 child: Text(
-              organization.isNotEmpty ? organization["name"] : orgname,
+              organization.organizationName!.isEmpty == true
+                  ? "No Organizations found"
+                  : organization.organizationName.toString(),
               style: Theme.of(context).textTheme.bodyText1,
             )),
             SizedBox(
               width: 16,
             ),
-            if (organization.isNotEmpty)
+            if (organization.organizationName!.isEmpty != true)
               IconButton(
                 onPressed: () {},
                 icon: SizedBox(
@@ -309,5 +323,32 @@ class SearchOrganizationItem extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future selectSuggestion({
+    required BuildContext context,
+    required OrganizationModel? organization,
+  }) async {
+    ClockUser user = Hive.box(kUserBox).get(kCurrentUserKey);
+    print(user.id);
+    if (organization!.organizationId == null) {
+      await organizationRepository.registerOrganization(
+        data: {
+          "name": organization.organizationName,
+          "color_code": themeData["primaryColor"],
+          "color_opacity": themeData["colorIntensity"],
+          "created_by": user.id,
+        },
+        context: context,
+      );
+    } else {
+      //already existed organization
+      await organizationRepository.addExistingOrganization(data: {
+        "user_id": user.id,
+        "org_id": organization.organizationId,
+      }, context: context);
+    }
+
+    orgNameController.clear();
   }
 }

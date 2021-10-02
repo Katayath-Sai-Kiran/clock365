@@ -2,7 +2,6 @@ import 'package:clock365/constants.dart';
 import 'package:clock365/elements/semi_circle.dart';
 import 'package:clock365/repository/userRepository.dart';
 import 'package:clock365/theme/colors.dart';
-import 'package:clock365/utils/customWidgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -26,7 +25,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormFieldState> _loginPasswordKey =
       GlobalKey<FormFieldState>();
 
-  final CustomWidgets _customWidgets = CustomWidgets();
   bool _isStaffLogin = true;
   bool _isVisible = false;
 
@@ -142,12 +140,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                       keyboardType: TextInputType.visiblePassword,
                       textInputAction: TextInputAction.done,
-                      validator: (val) {
-                        if (val?.isEmpty == true) {
-                          return "Please enter a valid password";
-                        }
-                        return null;
-                      },
+                      validator: (val) => val?.isEmpty == true
+                          ? "Password cannot be empty"
+                          : null,
                       key: _loginPasswordKey,
                       controller: _passwordTextEditingController,
                       focusNode: _passwordFocusNode,
@@ -204,29 +199,26 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future login() async {
-    try {
-      final UserRepository userRepository = Provider.of(context, listen: false);
-      final String mail = _loginTextEditingController.text.toString();
-      final String password = _passwordTextEditingController.text.toString();
+    final UserRepository userRepository = Provider.of(context, listen: false);
+    final String mail = _loginTextEditingController.text.toString();
+    final String password = _passwordTextEditingController.text.toString();
 
-      if (_loginMailKey.currentState?.validate() == true &&
-          _loginPasswordKey.currentState?.validate() == true) {
-        String responce = await userRepository.login(
-          email: mail,
-          password: password,
-          signInType: _isStaffLogin ? 1 : 2,
-          context: context,
-        );
+    if (_loginMailKey.currentState?.validate() == true &&
+        _loginPasswordKey.currentState?.validate() == true) {
+      String? responce = await userRepository.login(
+        email: mail,
+        password: password,
+        signInType: _isStaffLogin ? 1 : 2,
+        context: context,
+      );
 
-        if (responce == "done") {
-          _loginTextEditingController.clear();
-          _passwordTextEditingController.clear();
-        } else {
-          _customWidgets.snacbar(text: responce, context: context);
-        }
+      if (responce == "done") {
+        _loginTextEditingController.clear();
+        _passwordTextEditingController.clear();
+      } else {
+        _loginTextEditingController.clear();
+        _passwordTextEditingController.clear();
       }
-    } catch (e) {
-      print(e);
     }
   }
 }

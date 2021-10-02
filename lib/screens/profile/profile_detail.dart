@@ -1,10 +1,13 @@
 import 'package:clock365/constants.dart';
+import 'package:clock365/customWidgets.dart';
 import 'package:clock365/models/clock_user.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class ProfileDetailScreen extends StatelessWidget {
-  const ProfileDetailScreen({Key? key}) : super(key: key);
+  ProfileDetailScreen({Key? key}) : super(key: key);
+
+  final CustomWidgets _customWidgets = CustomWidgets();
 
   @override
   Widget build(BuildContext context) {
@@ -41,17 +44,8 @@ class ProfileDetailScreen extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 32, vertical: 48),
                   child: ElevatedButton(
                       onPressed: () async {
-                        String userId = Hive.box(kUserBox).get(kcurrentUserId);
-                        Map userData = Hive.box(kUserBox).get(userId);
-                        userData.update(
-                            "loginDetails",
-                          (value) => {"isLoggedIn": false},
-                        );
-                        await Hive.box(kUserBox).put(userId, userData);
-                        await Hive.box(kUserBox).put(kcurrentUserId, null);
-
-                        Navigator.of(context).pushNamedAndRemoveUntil(
-                            kLoginRoute, (route) => false);
+                        _customWidgets.snacbarWithTwoButtons(context: context);
+                       
                       },
                       child: Text('Sign Out')))
             ],

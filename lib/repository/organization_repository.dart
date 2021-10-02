@@ -1,26 +1,30 @@
 import 'dart:convert';
 
+import 'package:clock365/constants.dart';
+import 'package:clock365/models/OrganizationModel.dart';
 import 'package:clock365/models/clock_user.dart';
-import 'package:clock365/providers/user_provider.dart';
+import 'package:clock365/repository/userRepository.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:http/http.dart' as http;
-import 'package:clock365/constants.dart';
 import 'package:provider/provider.dart';
 
 class OrganizationRepository extends ChangeNotifier {
   final Map<String, String> headers = {
     "Content-Type": "application/json",
   };
-  Map? currentOrganization;
-  Map? get currentOrg => currentOrganization;
 
-  Future setCurrentOrganization({required Map? updatedOrganization}) async {
-    print("updated are $updatedOrganization");
-    currentOrganization = updatedOrganization;
+  Future setCurrentOrganization(
+      {required OrganizationModel updatedOrganization,
+      required String colorCode,
+      required double colorOpasity}) async {
+    updatedOrganization.colorCode = colorCode;
+    updatedOrganization.colorOpacity = colorOpasity;
 
-    notifyListeners();
+    ClockUser currentUser = await Hive.box(kUserBox).get(kCurrentUserKey);
+    currentUser.currentOrganization = updatedOrganization;
+    await Hive.box(kUserBox).put(kCurrentUserKey, currentUser);
   }
 
   Future addStaffToOrganization({
@@ -32,6 +36,7 @@ class OrganizationRepository extends ChangeNotifier {
     String body = jsonEncode({"org_id": organizationId, "user_id": user.id});
 
     http.Response response = await http.put(uri, headers: headers, body: body);
+
     Map result = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
@@ -44,11 +49,15 @@ class OrganizationRepository extends ChangeNotifier {
       );
 
       final String userId = Hive.box(kUserBox).get(kcurrentUserId);
+
       Map userData = Hive.box(kUserBox).get(userId);
+
       ClockUser currentUser = userData["currentUser"];
 
       List? currentUserOrganizations = currentUser.organizations;
+
       List updatedCurrentOrgs = [];
+
       Map currentOfflineOrganization =
           Hive.box(kUserBox).get(userId)["currentOrganization"];
 
@@ -73,7 +82,7 @@ class OrganizationRepository extends ChangeNotifier {
       currentOfflineOrganization.update(
           "staff", (value) => currentOfflineOrganizationStaff);
 
-      currentUser.organizations = updatedCurrentOrgs;
+      // currentUser.organizations = updatedCurrentOrgs;
 
       userData.update("currentUser", (value) => currentUser);
 
@@ -81,7 +90,6 @@ class OrganizationRepository extends ChangeNotifier {
           "currentOrganization", (value) => currentOfflineOrganization);
 
       await Hive.box(kUserBox).put(userId, userData);
-      
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -147,7 +155,7 @@ class OrganizationRepository extends ChangeNotifier {
       currentOfflineOrganization.update(
           "staff", (value) => currentOfflineOrganizationStaff);
 
-      currentOfflineUser.organizations = updatedCurrentOrgs;
+      // currentOfflineUser.organizations = updatedCurrentOrgs;
 
       currentOfflineUserData.update(
           "currentUser", (value) => currentOfflineUser);
@@ -156,7 +164,6 @@ class OrganizationRepository extends ChangeNotifier {
           "currentOrganization", (value) => currentOfflineOrganization);
 
       await Hive.box(kUserBox).put(userId, currentOfflineUserData);
-      
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -170,11 +177,9 @@ class OrganizationRepository extends ChangeNotifier {
 
   Future registerOrganization({
     required Map data,
-    required String oId,
     required BuildContext context,
   }) async {
-    final ClockUserProvider clockUserProvider =
-        Provider.of(context, listen: false);
+    final UserRepository userRepository = Provider.of(context, listen: false);
     try {
       final Uri uri = Uri.parse(kUserOrganizationResisterEndpoint);
 
@@ -184,27 +189,29 @@ class OrganizationRepository extends ChangeNotifier {
           await http.post(uri, headers: headers, body: encodedData);
 
       if (response.statusCode == 201) {
-        //
-        Map organizationData = jsonDecode(response.body);
+        //request successful
+        //cache the user data
+        Map<String, dynamic> organizationData = jsonDecode(response.body);
 
-        Map userData = Hive.box(kUserBox).get(oId);
+        List newOrgStaff = organizationData["staff"];
 
-        ClockUser currentUser = userData["currentUser"];
+        List<ClockUser> parsedStaff =
+            newOrgStaff.map((staff) => ClockUser.fromJson(staff)).toList();
 
-        List? previousOrganizations = currentUser.organizations;
+        organizationData["staff"] = parsedStaff;
+        OrganizationModel organizationModel =
+            OrganizationModel.fromJson(organizationData);
 
-        List updatedOrganizations = [
-          organizationData,
-          ...previousOrganizations!
-        ];
+        userRepository.updateCurrentCacheOrganizations(
+            newOrganization: organizationModel);
 
-        clockUserProvider.setOwner(updatedUser: currentUser);
+        ClockUser user = Hive.box(kUserBox).get(kCurrentUserKey);
 
-        currentUser.organizations = updatedOrganizations;
+        List<OrganizationModel>? previousOrganizations =
+            user.organizations ?? [];
 
-        userData.update("currentUser", (value) => currentUser);
-
-        await Hive.box(kUserBox).put(oId, userData);
+        user.organizations = [organizationModel, ...previousOrganizations];
+        await Hive.box(kUserBox).put(kCurrentUserKey, user);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -218,10 +225,6 @@ class OrganizationRepository extends ChangeNotifier {
     } catch (e) {
       print(e.toString());
     }
-  }
-
-  Future<List<Map>> getOrganizationMatches() async {
-    return [];
   }
 
   Future staffSignIntoOrganization({
@@ -240,23 +243,188 @@ class OrganizationRepository extends ChangeNotifier {
     }
   }
 
-  Future<List<Map>> getOrganizationSuggetions({required String pattern}) async {
+  Future<List<OrganizationModel>> getOrganizationSuggetions(
+      {required String pattern}) async {
     try {
       final String getOrgsUrl = "$kBaseUrl/api/v1/org/$pattern/suggestions";
       http.Response response = await http.get(Uri.parse(getOrgsUrl));
       List organizations = [];
-      List<Map> parsedOrganizations = [{}];
+      List<OrganizationModel> parsedOrganizations = [];
       if (response.statusCode == 200) {
         organizations = jsonDecode(response.body);
-        parsedOrganizations.clear();
+        print(organizations);
+
         organizations.forEach((organization) {
-          parsedOrganizations.add(organization as Map);
+          List<ClockUser>? staff = [];
+          List<ClockUser>? staffSignedIn = [];
+          List<ClockUser>? visitorSignedId = [];
+
+          List tempStaff = organization["staff"];
+          List tempStaffSignedIn = organization["staff_signed_in"];
+          List tempVisitorSignedIn = organization["visitors_signed_in"];
+          tempStaff.forEach((staffMember) {
+            staff.add(ClockUser()..id = staffMember["\$oid"]);
+          });
+          tempStaffSignedIn.forEach((staffMember) {
+            staffSignedIn.add(ClockUser()..id = staffMember["\$oid"]);
+          });
+          tempVisitorSignedIn.forEach((staffMember) {
+            visitorSignedId.add(ClockUser()..id = staffMember["\$oid"]);
+          });
+
+          organization["staff"] = staff;
+          organization["staff_signed_in"] = staffSignedIn;
+          organization["visitors_signed_in"] = visitorSignedId;
+          parsedOrganizations.add(OrganizationModel.fromJson(organization));
         });
       }
       return parsedOrganizations;
     } catch (error) {
       print(error);
-      return [{}];
+      return [];
+    }
+  }
+
+  Future addExistingOrganization(
+      {required Map data, required BuildContext context}) async {
+    final UserRepository userRepository = Provider.of(context, listen: false);
+    try {
+      final Uri uri = Uri.parse(kUserExistingOrganizationEndpoint);
+
+      final String encodedData = jsonEncode(data);
+
+      http.Response response =
+          await http.put(uri, headers: headers, body: encodedData);
+
+      if (response.statusCode == 200) {
+        //request successful
+        //cache the user data
+        Map<String, dynamic> organizationData = jsonDecode(response.body);
+
+        List newOrgStaff = organizationData["staff"];
+
+        List<ClockUser> parsedStaff =
+            newOrgStaff.map((staff) => ClockUser.fromJson(staff)).toList();
+
+        organizationData["staff"] = parsedStaff;
+        OrganizationModel organizationModel =
+            OrganizationModel.fromJson(organizationData);
+
+        userRepository.updateCurrentCacheOrganizations(
+            newOrganization: organizationModel);
+
+        ClockUser user = Hive.box(kUserBox).get(kCurrentUserKey);
+
+        List<OrganizationModel>? previousOrganizations =
+            user.organizations ?? [];
+
+        user.organizations = [organizationModel, ...previousOrganizations];
+        await Hive.box(kUserBox).put(kCurrentUserKey, user);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("organization successfully added"),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(response.body)));
+      }
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
+  Future<List<ClockUser>?> getCurrentOrganizationsignedStaff(
+      {required final String organizationId,
+      required final BuildContext context}) async {
+    List<ClockUser> staff = [];
+    try {
+      print("fetching current org signed staff");
+      http.Response response = await http.get(Uri.parse(
+          kGetStaffSignedInEndpoint.replaceFirst("org_id", organizationId)));
+      if (response.statusCode == 200) {
+        List responseList = jsonDecode(response.body);
+        staff = responseList
+            .map((e) => ClockUser.fromJson(e as Map<String, dynamic>))
+            .toList();
+        print("fetched staff $staff");
+        return staff;
+      } else {
+        print(response.body);
+      }
+    } catch (error) {
+      print("error is $error");
+    }
+  }
+
+  Future<List<ClockUser>?> getCurrentOrganizationsignedVisitors(
+      {required final String organizationId,
+      required final BuildContext context}) async {
+    List<ClockUser> staff = [];
+    try {
+      print("fetching current org signed visitors");
+      http.Response response = await http.get(Uri.parse(
+          kGetVisitorSignedInEndpoint.replaceFirst("org_id", organizationId)));
+      if (response.statusCode == 200) {
+        List responseList = jsonDecode(response.body);
+        staff = responseList
+            .map((e) => ClockUser.fromJson(e as Map<String, dynamic>))
+            .toList();
+        return staff;
+      } else {
+        print(response.body);
+      }
+    } catch (error) {
+      print("error is $error");
+    }
+  }
+
+  Future<List<ClockUser>?> getCurrentOrganizationStaff(
+      {required final String organizationId,
+      required final BuildContext context}) async {
+    List<ClockUser> staff = [];
+    try {
+      http.Response response = await http.get(
+          Uri.parse(kGetStaffEndpoint.replaceFirst("org_id", organizationId)));
+      if (response.statusCode == 200) {
+        List responseList = jsonDecode(response.body);
+        staff = responseList
+            .map((e) => ClockUser.fromJson(e as Map<String, dynamic>))
+            .toList();
+
+        return staff;
+      } else {
+        print(response.body);
+      }
+    } catch (error) {
+      print("error is $error");
+    }
+  }
+
+  Future<List<OrganizationModel>?> getCurrentOrganizations(
+      {required final String userId,
+      required final BuildContext context}) async {
+    List<OrganizationModel> organizations = [];
+    try {
+      http.Response response = await http.get(
+          Uri.parse(kGetCurrentOrganizations.replaceFirst("user_id", userId)));
+      if (response.statusCode == 200) {
+        List responseList = jsonDecode(response.body) ?? [];
+
+        organizations = responseList
+            .map((e) => OrganizationModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+
+        print("fetched orgs $organizations");
+
+        return organizations;
+      } else {
+        print(response.body);
+        return [];
+      }
+    } catch (error) {
+      print("error is $error");
     }
   }
 }

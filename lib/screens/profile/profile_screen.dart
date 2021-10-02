@@ -1,8 +1,12 @@
 import 'package:clock365/constants.dart';
 import 'package:clock365/models/clock_user.dart';
+import 'package:clock365/screens/staff/staffDetails.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
+import 'package:clock365/screens/organizations/organizationDetails.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -12,9 +16,7 @@ class ProfileScreen extends StatelessWidget {
     return ValueListenableBuilder(
         valueListenable: Hive.box(kUserBox).listenable(),
         builder: (context, Box userBox, child) {
-
-          final String userId = userBox.get(kcurrentUserId);
-          ClockUser currentUser = userBox.get(userId)["currentUser"];
+          ClockUser currentUser = userBox.get(kCurrentUserKey);
 
           return Scaffold(
             appBar: AppBar(
@@ -26,7 +28,9 @@ class ProfileScreen extends StatelessWidget {
                   currentUser: currentUser,
                 ),
                 ProfileStatus(),
-                ProfileOptions(),
+                ProfileOptions(
+                  currentUser: currentUser,
+                ),
               ],
             ),
           );
@@ -163,22 +167,24 @@ class ProfileStatus extends StatelessWidget {
 }
 
 class ProfileOptions extends StatelessWidget {
-  const ProfileOptions({Key? key}) : super(key: key);
+  final ClockUser currentUser;
+  const ProfileOptions({Key? key, required this.currentUser}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ListTile(
-          title: Text('Your Sites'),
-          onTap: () {},
-        ),
-        Divider(),
-        ListTile(
-          title: Text('Your Staff'),
-          onTap: () {},
-        ),
-      ],
-    );
+    return SingleChildScrollView(
+        child: Column(children: [
+      ListTile(
+        title: Text('Your Sites'),
+        onTap: () => Get.to(() => OrganizationDetails()),
+      ),
+      Divider(
+        height: 2.0,
+      ),
+      ListTile(
+        title: Text('Your Staff'),
+        onTap: () => Get.to(() => StaffDetails()),
+      ),
+    ]));
   }
 }

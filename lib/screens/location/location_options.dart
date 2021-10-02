@@ -4,6 +4,7 @@ import 'package:clock365/screens/location/location_screen.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:clock365/models/OrganizationModel.dart';
 
 class LocationOptionsScreen extends StatefulWidget {
   final LocationOptionArguments? arguments;
@@ -33,9 +34,9 @@ class _LocationOptionsScreenState extends State<LocationOptionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Map currentOrganization =
-        ModalRoute.of(context)?.settings.arguments as Map;
-    _orgNameController..text = currentOrganization["orgnization"]["name"];
+    final Map arguements = ModalRoute.of(context)?.settings.arguments as Map;
+    OrganizationModel currentOrganization = arguements["organization"];
+    _orgNameController..text = currentOrganization.organizationName.toString();
 
     return Scaffold(
         appBar: AppBar(
@@ -64,7 +65,7 @@ class _LocationOptionsScreenState extends State<LocationOptionsScreen> {
                     controller: _orgNameController,
                     focusNode: _orgFocusNode,
                     decoration: InputDecoration(
-                        hintText: currentOrganization["orgnization"]["name"] ??
+                        hintText: currentOrganization.organizationName ??
                             "DFL Scaket",
                         fillColor: getFillColor(_orgFocusNode)),
                   ),
@@ -86,9 +87,11 @@ class _LocationOptionsScreenState extends State<LocationOptionsScreen> {
                       ),
                       LocationItem(
                         title: "Staff",
+                        selectedOrganization: currentOrganization,
                       ),
                       LocationItem(
                         title: "Visitors",
+                        selectedOrganization: currentOrganization,
                       ),
                     ],
                   ),
@@ -100,11 +103,11 @@ class _LocationOptionsScreenState extends State<LocationOptionsScreen> {
               alignment: Alignment.bottomCenter,
               margin: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               child: ElevatedButton(
-                onPressed: () => {
+                onPressed: () {
                   Navigator.of(context).pushNamed(
                     kEditStaffRoute,
                     arguments: currentOrganization,
-                  ),
+                  );
                 },
                 child: Text(
                   S.of(context).done,
@@ -118,16 +121,20 @@ class _LocationOptionsScreenState extends State<LocationOptionsScreen> {
 
 class LocationItem extends StatefulWidget {
   final String? title;
-  LocationItem({Key? key, required this.title}) : super(key: key);
+  final OrganizationModel? selectedOrganization;
+  LocationItem({Key? key, required this.title, this.selectedOrganization})
+      : super(key: key);
 
   @override
   _LocationItemState createState() => _LocationItemState();
 }
 
 class _LocationItemState extends State<LocationItem> {
-  bool switchVal = false;
-  bool isStaff = false;
-  bool isVisitors = false;
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -147,15 +154,22 @@ class _LocationItemState extends State<LocationItem> {
                   style: Theme.of(context).textTheme.button,
                 )),
                 CupertinoSwitch(
-                    value: switchVal,
+                    value: widget.title == "Staff"
+                        ? widget.selectedOrganization!.staffSignIn.toString() ==
+                                "true"
+                            ? true
+                            : false
+                        : widget.selectedOrganization!.visitorSignIn
+                                    .toString() ==
+                                "true"
+                            ? true
+                            : false,
                     onChanged: (newState) {
                       setState(() {
                         if (widget.title == "Staff") {
-                          isStaff = true;
-                          switchVal = newState;
+                          widget.selectedOrganization!.staffSignIn = newState;
                         } else {
-                          isVisitors = true;
-                          switchVal = newState;
+                          widget.selectedOrganization!.visitorSignIn = newState;
                         }
                       });
                     })

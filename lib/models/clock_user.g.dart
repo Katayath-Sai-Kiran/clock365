@@ -23,14 +23,15 @@ class ClockUserAdapter extends TypeAdapter<ClockUser> {
       isStaff: fields[3] as bool?,
       email: fields[4] as String?,
       jobTitle: fields[5] as String?,
-      organizations: (fields[6] as List?)?.cast<dynamic>(),
+      organizations: (fields[6] as List?)?.cast<OrganizationModel>(),
+      currentOrganization: fields[7] as OrganizationModel?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ClockUser obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class ClockUserAdapter extends TypeAdapter<ClockUser> {
       ..writeByte(5)
       ..write(obj.jobTitle)
       ..writeByte(6)
-      ..write(obj.organizations);
+      ..write(obj.organizations)
+      ..writeByte(7)
+      ..write(obj.currentOrganization);
   }
 
   @override

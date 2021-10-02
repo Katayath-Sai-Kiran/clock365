@@ -1,10 +1,18 @@
 import 'package:clock365/constants.dart';
+import 'package:clock365/customWidgets.dart';
 import 'package:clock365/generated/l10n.dart';
+import 'package:clock365/models/OrganizationModel.dart';
+import 'package:clock365/models/clock_user.dart';
+import 'package:clock365/repository/organization_repository.dart';
+import 'package:clock365/screens/dashboard/visitor_confirm_screen.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:get/get.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:provider/provider.dart';
 
 class VisitorSignInDetailsScreen extends StatefulWidget {
   const VisitorSignInDetailsScreen({Key? key}) : super(key: key);
@@ -17,14 +25,10 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
   final TextEditingController _orgNameController = TextEditingController();
   final FocusNode _yourNameFocusNode = FocusNode();
   final FocusNode _orgNameFocusNode = FocusNode();
-
-  final List<Map> organizations = [
-    {"name": "Wielabs"},
-    {"name": "Xavior School"},
-  ];
+  final CustomWidgets _customWidgets = CustomWidgets();
 
   bool _isTermsAndConditionChecked = false;
-  Map _selectedOrganization = {};
+  OrganizationModel? _selectedOrganization;
 
   @override
   void initState() {
@@ -43,6 +47,11 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final OrganizationRepository organizationRepository =
+        Provider.of(context, listen: false);
+    final ClockUser currentUser = Hive.box(kUserBox).get(kCurrentUserKey);
+    final double _width = MediaQuery.of(context).size.width;
+    final double _height = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         title: Text(S.of(context).signInDetails),
@@ -57,8 +66,7 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
                     SizedBox(
                       height: 16,
                     ),
-                    TypeAheadField(
-                      getImmediateSuggestions: true,
+                    TypeAheadField<OrganizationModel>(
                       loadingBuilder: (_) {
                         return CircularProgressIndicator();
                       },
@@ -66,34 +74,60 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
                         controller: _orgNameController,
                         textInputAction: TextInputAction.done,
                       ),
+                      autoFlipDirection: true,
+                      noItemsFoundBuilder: (_) => SearchOrganizationItem(
+                        organization: OrganizationModel(
+                            organizationName: "No Organization Found"),
+                      ),
                       suggestionsCallback: (pattern) async {
-                        return organizations;
+                        List<OrganizationModel> matchedOrganizations =
+                            await organizationRepository
+                                .getOrganizationSuggetions(pattern: pattern);
+                        if (matchedOrganizations.length > 0) {
+                          return matchedOrganizations;
+                        } else {
+                          return [
+                            OrganizationModel(
+                                organizationName:
+                                    _orgNameController.text.toString()),
+                          ];
+                        }
                       },
-                      itemBuilder: (_, Map organization) {
+                      itemBuilder: (context, OrganizationModel organization) {
                         return SearchOrganizationItem(
-                            organization: organization);
+                          organization: organization,
+                        );
                       },
-                      onSuggestionSelected: (Map organization) {
+                      onSuggestionSelected:
+                          (OrganizationModel selectedOrganization) {
                         setState(() {
-                          _orgNameController.text = organization["name"];
-                          _selectedOrganization = organization;
+                          if (selectedOrganization.organizationName ==
+                              "No Organizations Found") {
+                            _orgNameController.text = "";
+                          } else {
+                            _orgNameController.text = selectedOrganization
+                                .organizationName
+                                .toString();
+                            _selectedOrganization = selectedOrganization;
+                          }
                         });
+//
                       },
                     ),
                     SizedBox(
                       height: 16,
                     ),
                     TextButton(
-                        onPressed: () {},
-                        child: Row(
-                          children: [
-                            Expanded(
-                                child: Text(
-                              S.of(context).informationBeingUsedConsent,
-                              style: Theme.of(context).textTheme.bodyText2,
-                            )),
-                            CupertinoSwitch(
-                                value: _isTermsAndConditionChecked,
+                      onPressed: () {},
+                      child: Row(
+                        children: [
+                          Expanded(
+                              child: Text(
+                            S.of(context).informationBeingUsedConsent,
+                            style: Theme.of(context).textTheme.bodyText2,
+                          )),
+                          CupertinoSwitch(
+                            value: _isTermsAndConditionChecked,
                             activeColor: Theme.of(context).colorScheme.primary,
                             onChanged: (newState) {
                               setState(() {
@@ -101,8 +135,8 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
                               });
                             },
                           ),
-                          ],
-                        ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -112,22 +146,143 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
                       onPressed: () {
                         if (_orgNameController.text.isNotEmpty) {
                           if (_isTermsAndConditionChecked) {
-                            Navigator.of(context)
-                                .pushNamed(kUserConfirmSignInScreen);
+                            bool _isLoggingInCurrentOrg =
+                                _selectedOrganization!.organizationId ==
+                                        currentUser
+                                            .currentOrganization!.organizationId
+                                    ? true
+                                    : false;
+
+                            if (_isLoggingInCurrentOrg) {
+                              //logging into current Org
+                              if (_selectedOrganization!.visitorSignIn ==
+                                  true) {
+                                //visitor has permission to login
+                                Get.to(
+                                  () => VisitorSignInConfirm(
+                                      selectedOrganization:
+                                          _selectedOrganization),
+                                );
+                              } else {
+                                Get.to(
+                                  () => VisitorSignInConfirm(
+                                      selectedOrganization:
+                                          _selectedOrganization),
+                                );
+                                //visitor is not allowed to login in
+
+                                // _customWidgets.failureToste(
+                                //     text:
+                                //         "Visitors Cannot SignIn Into ${_selectedOrganization!.organizationName.toString()}",
+                                //     context: context);
+                              }
+                            } else {
+                              if (_selectedOrganization!.visitorSignIn ==
+                                  true) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    backgroundColor: Colors.white,
+                                    elevation: 8.0,
+                                    behavior: SnackBarBehavior.floating,
+                                    content: Container(
+                                      height: 100,
+                                      width: _width,
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceAround,
+                                        children: [
+                                          Text(
+                                            "Are you sure to logout !",
+                                            style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
+                                            ),
+                                          ),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceAround,
+                                            children: [
+                                              Container(
+                                                width: _width * 0.3,
+                                                height: _height * 0.05,
+                                                child: OutlinedButton(
+                                                  style: ButtonStyle(
+                                                    backgroundColor:
+                                                        MaterialStateProperty
+                                                            .all(Colors.white),
+                                                    side: MaterialStateProperty
+                                                        .all(BorderSide(
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .primary,
+                                                    )),
+                                                  ),
+                                                  onPressed: () {
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .hideCurrentSnackBar();
+
+                                                    //Scaffold.of(context).is
+                                                  },
+                                                  child: Text(
+                                                    "Cancle",
+                                                    style: TextStyle(
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .primary),
+                                                  ),
+                                                ),
+                                              ),
+                                              Container(
+                                                width: _width * 0.3,
+                                                height: _height * 0.05,
+                                                child: OutlinedButton(
+                                                  style: ButtonStyle(
+                                                    backgroundColor:
+                                                        MaterialStateProperty
+                                                            .all(Theme.of(
+                                                                    context)
+                                                                .colorScheme
+                                                                .primary),
+                                                  ),
+                                                  onPressed: () {
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .hideCurrentSnackBar();
+
+                                                    Navigator.of(context).pushNamed(
+                                                        kVisitorSignInDetailsScreen);
+                                                  },
+                                                  child: Text("Logout"),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    margin: EdgeInsets.all(16.0),
+                                  ),
+                                );
+                              } else {
+                                Navigator.of(context)
+                                    .pushNamed(kVisitorSignInDetailsScreen);
+                                // _customWidgets.failureToste(
+                                //     text:
+                                //         "Visitors Cannot SignIn Into ${_selectedOrganization!.organizationName.toString()}",
+                                //     context: context);
+                              }
+                            }
                           } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content:
-                                    Text("Plaese accept Terms and Conditions"),
-                              ),
-                            );
+                            _customWidgets.failureToste(
+                                text: "Plaese accept Terms and Conditions!",
+                                context: context);
                           }
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("Organization cannot be empty"),
-                            ),
-                          );
+                          _customWidgets.failureToste(
+                              text: "Organization cannot be empty",
+                              context: context);
                         }
                       },
                       child: Text(
@@ -144,7 +299,7 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
 }
 
 class SearchOrganizationItem extends StatelessWidget {
-  final Map organization;
+  final OrganizationModel organization;
   SearchOrganizationItem({required this.organization});
   @override
   Widget build(BuildContext context) {
@@ -157,21 +312,29 @@ class SearchOrganizationItem extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-              child: Text(
-            organization["name"],
-            style: Theme.of(context).textTheme.bodyText1,
+              child: Container(
+            width: Get.width,
+            alignment: Alignment.centerLeft,
+            height: organization.organizationName != "No Organizations Found"
+                ? 24
+                : 38,
+            child: Text(
+              organization.organizationName.toString(),
+              style: Theme.of(context).textTheme.bodyText1,
+            ),
           )),
           SizedBox(
             width: 16,
           ),
-          IconButton(
-            onPressed: () {},
-            icon: SizedBox(
-              height: 24,
-              width: 24,
-              child: SvgPicture.asset('assets/add_user.svg'),
-            ),
-          )
+          if (organization.organizationName != "No Organizations Found")
+            IconButton(
+              onPressed: () {},
+              icon: SizedBox(
+                height: 24,
+                width: 24,
+                child: SvgPicture.asset('assets/add_user.svg'),
+              ),
+            )
         ],
       ),
     );

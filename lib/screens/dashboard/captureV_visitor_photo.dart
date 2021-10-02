@@ -11,21 +11,20 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:clock365/models/OrganizationModel.dart';
 
-
-class CapturePhotoScreen extends StatefulWidget {
-  const CapturePhotoScreen({Key? key}) : super(key: key);
-
+class CaptureVisitorPhoto extends StatefulWidget {
+  final OrganizationModel? selectedOrganization;
+  CaptureVisitorPhoto({required this.selectedOrganization});
   @override
-  _CapturePhotoScreenState createState() => _CapturePhotoScreenState();
+  State<CaptureVisitorPhoto> createState() => _CaptureVisitorPhotoState();
 }
 
-class _CapturePhotoScreenState extends State<CapturePhotoScreen> {
+class _CaptureVisitorPhotoState extends State<CaptureVisitorPhoto> {
   final ImagePicker _imagePicker = ImagePicker();
+
   File? _capturedImage;
+
   @override
   Widget build(BuildContext context) {
-    final OrganizationModel selectedOrganization =
-        ModalRoute.of(context)!.settings.arguments as OrganizationModel;
     final double _width = MediaQuery.of(context).size.width;
     final ClockUser currentUser = Hive.box(kUserBox).get(kCurrentUserKey);
     final UserRepository userRepository = Provider.of(context, listen: false);
@@ -115,12 +114,13 @@ class _CapturePhotoScreenState extends State<CapturePhotoScreen> {
                                 ),
                               );
                             } else {
+                              print("signing visitor with signtype 2");
                               userRepository.manualSignInUser(
                                 context: context,
-                                organizationName:
-                                    selectedOrganization.organizationName!,
+                                organizationName: widget
+                                    .selectedOrganization!.organizationName!,
                                 profileImage: _capturedImage!,
-                                signInType: 1,
+                                signInType: 2,
                                 userId: currentUser.id!,
                               );
                             }

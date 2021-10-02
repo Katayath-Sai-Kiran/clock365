@@ -172,7 +172,21 @@ class _LocationCustomizationScreenState
                     margin: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
                     child: ElevatedButton(
                       onPressed: () async {
-                        setTheme();
+                           List<String> colors = [
+                          "0xFF6756D8",
+                          "0xFFFDBE00",
+                          "0xFF244F43",
+                          "0xFFFF6957",
+                        ];
+
+                        Navigator.of(context).pushNamed(
+                          kLocationRoute,
+                          arguments: {
+                            "primaryColor": colors[currentIndex],
+                            "colorIntensity": colorIntensity,
+                          },
+                        );
+                        //setTheme();
                       },
                       style: ElevatedButton.styleFrom(
                           primary: primaryColor.withOpacity(colorIntensity)),
@@ -211,13 +225,6 @@ class _LocationCustomizationScreenState
       await userBox.put(currentUserId, userData);
     }
 
-    Navigator.of(context).pushNamed(
-      kLocationRoute,
-      arguments: {
-        "primaryColor": colors[currentIndex],
-        "colorIntensity": colorIntensity,
-      },
-    );
   }
 }
 

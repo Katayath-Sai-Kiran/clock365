@@ -1,5 +1,6 @@
 import 'package:clock365/constants.dart';
 import 'package:clock365/generated/l10n.dart';
+import 'package:clock365/models/clock_user.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -168,16 +169,9 @@ class _ReadySetGoScreenState extends State<ReadySetGoScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                Box userBox = await Hive.openBox<dynamic>(kUserBox);
-                String currentUserId = userBox.get(kcurrentUserId);
+                await Hive.box(kUserBox).put("isLoggedIn", true);
 
-                Map userData = userBox.get(currentUserId);
-                userData.update("loginDetails", (value) => {"isLoggedIn": true},
-                    ifAbsent: () {
-                  return {"isLoggedIn": true};
-                });
 
-                await userBox.put(currentUserId, userData);
                 Navigator.of(context)
                     .pushNamedAndRemoveUntil(kMainScreen, (route) => false);
               },

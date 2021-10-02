@@ -1,7 +1,7 @@
 import 'package:clock365/constants.dart';
+import 'package:clock365/customWidgets.dart';
 import 'package:clock365/repository/userRepository.dart';
 import 'package:clock365/theme/colors.dart';
-import 'package:clock365/utils/customWidgets.dart';
 import 'package:flutter/material.dart';
 import 'package:otp_text_field/otp_text_field.dart';
 import 'package:otp_text_field/style.dart';
@@ -129,17 +129,17 @@ class _OTPBodyState extends State<OTPBody> {
             padding: EdgeInsets.symmetric(vertical: 24, horizontal: 48),
             child: ElevatedButton(
               onPressed: () async {
-                String response = await userrepository.verifyUserGmail(
+                String? response = await userrepository.verifyUserGmail(
+                  context: context,
                   jobTitle: widget.jobTitle.toString(),
                   otpCode: _otp.toString(),
                   mail: widget.mail.toString(),
                 );
 
                 if (response == "done") {
-                  _customWidgets.snacbar(
-                    context: context,
-                    text: "Email verified successfully",
-                  );
+                  _customWidgets.successToste(
+                      text: "Email verified successfully", context: context);
+
                   Navigator.of(context).pushNamedAndRemoveUntil(
                     kSignupIntroduce,
                     (route) => false,
@@ -148,12 +148,7 @@ class _OTPBodyState extends State<OTPBody> {
                       "job_title": widget.jobTitle,
                     },
                   );
-                } else {
-                  _customWidgets.snacbar(
-                    context: context,
-                    text: response,
-                  );
-                }
+                } 
               },
               child: Text('Submit'),
               style: ElevatedButton.styleFrom(

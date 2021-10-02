@@ -1,9 +1,13 @@
-import 'package:clock365/constants.dart';
+import 'dart:convert';
+
 import 'package:clock365/elements/semi_circle.dart';
 import 'package:clock365/providers/user_provider.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+
+import '../../constants.dart';
 
 class SignupIntroduceScreen extends StatefulWidget {
   const SignupIntroduceScreen({Key? key}) : super(key: key);
@@ -142,34 +146,8 @@ class _SignupIntroduceScreenState extends State<SignupIntroduceScreen> {
                             Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 24),
                                 child: ElevatedButton(
-                                  onPressed: () async {
-                                    final String name =
-                                        _nameController.text.toString();
-                                    final String organization =
-                                        _orgNameController.text.toString();
-                                    final String website =
-                                        _websiteNameController.text.toString();
-                                    if (_nameKey.currentState?.validate() ==
-                                            true &&
-                                        _orgNameKey.currentState?.validate() ==
-                                            true) {
-                                      _nameController.clear();
-                                      _orgNameController.clear();
-                                      _websiteNameController.clear();
-                                      Map userData = {
-                                        "name": name,
-                                        "organization": organization,
-                                        "website": website,
-                                        "mail": userDetails["mail"],
-                                        "job_title": userDetails["job_title"],
-                                      };
-                                      Navigator.of(context)
-                                          .pushReplacementNamed(
-                                        kSignupPasswordRoute,
-                                        arguments: userData,
-                                      );
-                                    }
-                                  },
+                                  onPressed: () =>
+                                      introduceAction(userDetails: userDetails),
                                   child: Text('Next'),
                                   style: ElevatedButton.styleFrom(
                                       minimumSize: Size(double.infinity, 48)),
@@ -179,5 +157,85 @@ class _SignupIntroduceScreenState extends State<SignupIntroduceScreen> {
                         ))))),
       ),
     );
+  }
+
+  Future introduceAction({required Map userDetails}) async {
+    final String organizationName = _orgNameController.text.toString();
+    final String getOrgsUrl =
+        "$kBaseUrl/api/v1/org/$organizationName/suggestions";
+    final String name = _nameController.text.toString();
+
+    final String website = _websiteNameController.text.toString();
+    final Map userData = {
+      "name": name,
+      "organization": organizationName,
+      "website": website,
+      "mail": userDetails["mail"],
+      "job_title": userDetails["job_title"],
+    };
+
+    try {
+      if (_nameKey.currentState?.validate() == true &&
+          _orgNameKey.currentState?.validate() == true) {
+        _nameController.clear();
+        _orgNameController.clear();
+        _websiteNameController.clear();
+
+        http.Response response = await http.get(Uri.parse(getOrgsUrl));
+
+        List organizations = [];
+        List<Map> parsedOrganizations = [{}];
+        bool isOrgAvailable = true;
+        if (response.statusCode == 200) {
+          organizations = jsonDecode(response.body);
+          organizations.forEach((organization) {
+            parsedOrganizations.add(organization as Map);
+          });
+        }
+
+        parsedOrganizations.forEach((organization) {
+          print(organization);
+          if (organization["name"] == organizationName) {
+            isOrgAvailable = false;
+          }
+        });
+        if (isOrgAvailable) {
+          Navigator.of(context).pushReplacementNamed(
+            kSignupPasswordRoute,
+            arguments: userData,
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              margin: EdgeInsets.all(16.0),
+              behavior: SnackBarBehavior.floating,
+              content: Row(
+                children: [
+                  Icon(Icons.warning_amber_outlined, color: Colors.orange),
+                  SizedBox(width: 16.0),
+                  Flexible(
+                    child: Text("$organizationName is already existed!"),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+      }
+    } catch (error) {
+      SnackBar(
+        margin: EdgeInsets.all(16.0),
+        behavior: SnackBarBehavior.floating,
+        content: Row(
+          children: [
+            Icon(Icons.warning_amber_outlined, color: Colors.orange),
+            SizedBox(width: 16.0),
+            Flexible(
+              child: Text("$error is already existed!"),
+            ),
+          ],
+        ),
+      );
+    }
   }
 }

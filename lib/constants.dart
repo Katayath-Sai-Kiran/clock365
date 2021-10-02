@@ -1,4 +1,5 @@
 // Hive types
+
 import 'package:clock365/models/clock_user.dart';
 import 'package:clock365/models/destination.dart';
 import 'package:clock365/screens/dashboard/dashboard_screen.dart';
@@ -19,12 +20,12 @@ const String kCurrentUserKey = "currentUser";
 const String kUserIdBuffer = "USERIDBUFFER";
 const String kcurrentUserId = "currentUserId";
 
-
 // Hive box keys
 const String kUserKey = 'clock_user.KEY';
 
 // API
-const String kBaseUrl = 'http://192.168.1.48:5000';
+//const String kBaseUrl = 'https://clock365.wielabs.tech';
+const String kBaseUrl = 'http://192.168.1.48:6001';
 
 // Supported locales
 const kSupportedLocales = <Locale>[
@@ -89,12 +90,28 @@ const String kGenerateOTPEndpoint = "$kBaseUrl/api/v1/send/code/verification";
 const String kVerifyGmailEndPoint = "$kBaseUrl/api/v1/verify/code";
 const String kUserSignUpEndPoint = "$kBaseUrl/api/v1/signup";
 const String kUserLoginEndPont = "$kBaseUrl/api/v1/login";
+
 const String kUserOrganizationResisterEndpoint = "$kBaseUrl/api/v1/org";
+const String kUserExistingOrganizationEndpoint =
+    "$kBaseUrl/api/v1/user/add/org";
+
 const String kAddnNewStaffEndPoint = "$kBaseUrl/api/v1/org/new/staff";
 const String kRemoveStaffEndPoint = "$kBaseUrl/api/v1/org/remove/staff";
+
 const String kstaffSignInEndPoint = "$kBaseUrl/api/v1/org/signin";
-//const String kStaffSuggestionsEngPoint = "$kBaseUrl/api/v1/org";
-//const String kUserSignUpEndPoint = "$kBaseUrl//api/v1/staff//";
+const String kGetCurrentSitesEndPoint = "$kBaseUrl/api/v1/user/user_id/orgs";
+
+const String kGetStaffEndpoint = "$kBaseUrl/api/v1/org/org_id/staff";
+const String kGetStaffSignedInEndpoint =
+    "$kBaseUrl/api/v1/org/org_id/staff/active";
+
+const String kGetVisitorSignedInEndpoint =
+    "$kBaseUrl/api/v1/org/org_id/visitors/active";
+    
+const String kGetCurrentOrganizations = "$kBaseUrl/api/v1/user/user_id/orgs";
+
+const String kUpdateSignInStatus = "$kBaseUrl/api/v1/org";
+
+
 
 //userBox keys
-
