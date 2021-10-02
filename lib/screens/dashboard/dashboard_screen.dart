@@ -8,6 +8,7 @@ import 'package:clock365/screens/qrTest.dart';
 
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -208,7 +209,8 @@ class _StaffListState extends State<StaffList> {
                   ? Center(
                       child: CircularProgressIndicator(),
                     )
-                  : ListView.builder(
+                  : staff.length > 0
+                      ? ListView.builder(
                       physics: NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       itemCount: staff.length,
@@ -216,6 +218,17 @@ class _StaffListState extends State<StaffList> {
                         user: staff[index],
                       ),
                     )
+                      : Padding(
+                          padding:
+                              const EdgeInsets.only(top: 48.0, right: 16.0),
+                          child: Center(
+                            child: SvgPicture.asset(
+                              "assets/no_users.svg",
+                              height: Get.height * 0.25,
+                              width: Get.width * 0.3,
+                            ),
+                          ),
+                        ),
             ],
           );
         });
@@ -296,6 +309,8 @@ class _VisitorListState extends State<VisitorList> {
               SizedBox(
                 height: 16,
               ),
+              visitors.length > 0
+                  ?
               ListView.builder(
                 physics: NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
@@ -304,6 +319,16 @@ class _VisitorListState extends State<VisitorList> {
                   visitor: visitors[index],
                 ),
               )
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 48.0, right: 16.0),
+                      child: Center(
+                        child: SvgPicture.asset(
+                          "assets/no_users.svg",
+                          height: Get.height * 0.25,
+                          width: Get.width * 0.3,
+                        ),
+                      ),
+                    )
             ],
           );
         });
