@@ -89,7 +89,7 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
                           return [
                             OrganizationModel(
                                 organizationName:
-                                    _orgNameController.text.toString()),
+                                    "No Organization Found"),
                           ];
                         }
                       },
@@ -102,7 +102,7 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
                           (OrganizationModel selectedOrganization) {
                         setState(() {
                           if (selectedOrganization.organizationName ==
-                              "No Organizations Found") {
+                              "No Organization Found") {
                             _orgNameController.text = "";
                           } else {
                             _orgNameController.text = selectedOrganization
@@ -164,17 +164,17 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
                                           _selectedOrganization),
                                 );
                               } else {
-                                Get.to(
-                                  () => VisitorSignInConfirm(
-                                      selectedOrganization:
-                                          _selectedOrganization),
-                                );
-                                //visitor is not allowed to login in
+                                // Get.to(
+                                //   () => VisitorSignInConfirm(
+                                //       selectedOrganization:
+                                //           _selectedOrganization),
+                                // );
+                                // visitor is not allowed to login in
 
-                                // _customWidgets.failureToste(
-                                //     text:
-                                //         "Visitors Cannot SignIn Into ${_selectedOrganization!.organizationName.toString()}",
-                                //     context: context);
+                                _customWidgets.failureToste(
+                                    text:
+                                        "Visitors Cannot SignIn Into ${_selectedOrganization!.organizationName.toString()}",
+                                    context: context);
                               }
                             } else {
                               if (_selectedOrganization!.visitorSignIn ==
@@ -266,12 +266,14 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
                                   ),
                                 );
                               } else {
-                                Navigator.of(context)
-                                    .pushNamed(kVisitorSignInDetailsScreen);
-                                // _customWidgets.failureToste(
-                                //     text:
-                                //         "Visitors Cannot SignIn Into ${_selectedOrganization!.organizationName.toString()}",
-                                //     context: context);
+                                // Get.to(() => VisitorSignInConfirm(
+                                //       selectedOrganization:
+                                //           _selectedOrganization,
+                                //     ));
+                                _customWidgets.failureToste(
+                                    text:
+                                        "Visitors Cannot SignIn Into ${_selectedOrganization!.organizationName.toString()}",
+                                    context: context);
                               }
                             }
                           } else {

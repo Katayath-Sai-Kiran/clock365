@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:clock365/constants.dart';
 
 class StaffDetails extends StatelessWidget {
   const StaffDetails({Key? key}) : super(key: key);

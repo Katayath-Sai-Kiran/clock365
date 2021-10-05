@@ -2,16 +2,18 @@ import 'package:clock365/constants.dart';
 import 'package:clock365/models/OrganizationModel.dart';
 import 'package:clock365/models/clock_user.dart';
 import 'package:clock365/models/organization.dart';
+import 'package:clock365/onboarding/intro_logo.dart';
 import 'package:clock365/providers/organization_provider.dart';
 import 'package:clock365/providers/user_provider.dart';
 import 'package:clock365/repository/userRepository.dart';
 import 'package:clock365/route_generator.dart';
 import 'package:clock365/screens/login/login_screen.dart';
 import 'package:clock365/screens/main/main_screen.dart';
+import 'package:clock365/screens/qrTest.dart';
 import 'package:clock365/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:get/get_navigation/src/root/get_material_app.dart'; 
+import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -46,7 +48,7 @@ class _Clock365AppState extends State<Clock365App> {
   Widget build(BuildContext context) {
     double colorIntensity = 1.0;
     String colorCode = "0xFF6756D8";
-
+    int signInType = 3;
 
     Map themeData = {
       "primaryColor": colorCode,
@@ -64,10 +66,12 @@ class _Clock365AppState extends State<Clock365App> {
         valueListenable: Hive.box<dynamic>(kUserBox).listenable(),
         builder: (context, Box box, child) {
           bool? _isLoggedIn = box.get("isLoggedIn") ?? false;
+          bool? _isFirstTime;
 
           if (_isLoggedIn == true) {
             //user is already logged in
             ClockUser? loggedInUser = box.get(kCurrentUserKey);
+            signInType = box.get(kSignInType);
             OrganizationModel? currentOrganization =
                 loggedInUser!.currentOrganization;
 
@@ -84,9 +88,9 @@ class _Clock365AppState extends State<Clock365App> {
                 "colorIntensity": currentOrganization?.colorOpacity,
                 "primaryColor": currentOrganization?.colorCode,
               };
+            } else {
+              _isFirstTime = box.get("isFirstTime") ?? true;
             }
-          
-
           }
 
           // ClockUser currentUser = box.get(kCurrentUserKey);
@@ -107,14 +111,18 @@ class _Clock365AppState extends State<Clock365App> {
                 int.parse(themeData["primaryColor"] ?? colorCode),
               ),
             ),
-            home: _isLoggedIn == true ? MainScreen() : LoginScreen(),
+            home: _isFirstTime == true
+                ? IntroLogo()
+                : _isLoggedIn == true
+                    ? signInType == 1
+                        ? QRViewExample()
+                        : signInType == 2
+                            ? QRViewExample()
+                            : MainScreen()
+                    : LoginScreen(),
           );
         },
       ),
     );
   }
 }
-
-
-
-              

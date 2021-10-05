@@ -2,7 +2,6 @@ import 'package:clock365/constants.dart';
 import 'package:clock365/generated/l10n.dart';
 import 'package:clock365/models/OrganizationModel.dart';
 import 'package:clock365/models/clock_user.dart';
-import 'package:clock365/providers/organization_provider.dart';
 import 'package:clock365/repository/organization_repository.dart';
 import 'package:clock365/repository/userRepository.dart';
 import 'package:clock365/theme/colors.dart';

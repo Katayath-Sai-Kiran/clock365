@@ -1,9 +1,9 @@
+import 'package:clock365/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 
 import 'package:clock365/constants.dart';
 import 'package:clock365/models/clock_user.dart';
 import 'package:clock365/repository/organization_repository.dart';
-import 'package:clock365/theme/colors.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
@@ -14,36 +14,26 @@ class OrganizationDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final OrganizationRepository organizationRepository =
-        Provider.of(context, listen: false);
+    final ClockUserProvider organizationRepository =
+        Provider.of<ClockUserProvider>(context, listen: false);
     final ClockUser currentUser = Hive.box(kUserBox).get(kCurrentUserKey);
+
+    //organizationRepository.getCurrentUserSites();
 
     return Scaffold(
       appBar: AppBar(
         title: Text("Organizations"),
       ),
-      body: FutureBuilder(
-          future: organizationRepository.getCurrentOrganizations(
-              userId: currentUser.id.toString(), context: context),
-          builder: (context, AsyncSnapshot snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-            final List<OrganizationModel> organizations = snapshot.data ?? [];
-            return ListView.builder(
-              padding: EdgeInsets.only(
-                  bottom: Get.height * 0.05,
-                  left: 16.0,
-                  right: 16.0,
-                  top: 12.0),
-              itemCount: organizations.length,
-              itemBuilder: (_, int index) {
-                return StaffItem(organization: organizations[index]);
-              },
-            );
-          }),
+      body: ListView.builder(
+        padding: EdgeInsets.only(
+            bottom: Get.height * 0.05, left: 16.0, right: 16.0, top: 12.0),
+        itemCount: organizationRepository.currentUserOrganizations?.length,
+        itemBuilder: (_, int index) {
+          return StaffItem(
+              organization:
+                  organizationRepository.currentUserOrganizations![index]);
+        },
+      ),
     );
   }
 }

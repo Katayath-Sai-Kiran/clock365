@@ -1,4 +1,3 @@
-import 'package:clock365/constants.dart';
 import 'package:clock365/generated/l10n.dart';
 import 'package:clock365/models/clock_user.dart';
 import 'package:clock365/providers/user_provider.dart';

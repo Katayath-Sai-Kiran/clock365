@@ -19,6 +19,7 @@ const String kUserBox = "users";
 const String kCurrentUserKey = "currentUser";
 const String kUserIdBuffer = "USERIDBUFFER";
 const String kcurrentUserId = "currentUserId";
+const String kSignInType = "signInType";
 
 // Hive box keys
 const String kUserKey = 'clock_user.KEY';
@@ -76,6 +77,7 @@ const String kVisitorSignInDetailsScreen = '/visitorSignInDetailsScreen';
 const String kUserConfirmSignInScreen = '/userConfirmSignIn';
 const String kCapturePhotoScreen = '/capturePhoto';
 const String kProfileDetailRoute = '/profileDetail';
+const String kScanQr = '/scanQr';
 
 // Colors
 final allColors = <Color>[
@@ -107,10 +109,11 @@ const String kGetStaffSignedInEndpoint =
 
 const String kGetVisitorSignedInEndpoint =
     "$kBaseUrl/api/v1/org/org_id/visitors/active";
-    
+
 const String kGetCurrentOrganizations = "$kBaseUrl/api/v1/user/user_id/orgs";
 
 const String kUpdateSignInStatus = "$kBaseUrl/api/v1/org";
+const String kGetScannedOrgDetailsEndPoint = "$kBaseUrl/api/v1/org/org_id";
 
 
 

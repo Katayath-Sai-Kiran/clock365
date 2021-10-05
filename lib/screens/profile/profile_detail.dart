@@ -1,8 +1,6 @@
-import 'package:clock365/constants.dart';
 import 'package:clock365/customWidgets.dart';
 import 'package:clock365/models/clock_user.dart';
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 
 class ProfileDetailScreen extends StatelessWidget {
   ProfileDetailScreen({Key? key}) : super(key: key);

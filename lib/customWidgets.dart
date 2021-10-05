@@ -9,6 +9,8 @@ class CustomWidgets {
       {required String text, required BuildContext context}) async {
     return ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.all(16.0),
         content: Row(
           children: [
             Icon(Icons.done, color: Colors.green),

@@ -1,9 +1,12 @@
 import 'package:clock365/constants.dart';
 import 'package:clock365/models/destination.dart';
+import 'package:clock365/providers/organization_provider.dart';
+import 'package:clock365/providers/user_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -16,8 +19,18 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 1;
 
   @override
+  void initState() {
+    super.initState();
+    Provider.of<OrganizationProvider>(context, listen: false)
+        .getCurrentOrganizationSignedInVisitors(context: context);
+    Provider.of<OrganizationProvider>(context, listen: false)
+        .getCurrentOrganizationSignedInStaff(context: context);
+    Provider.of<ClockUserProvider>(context, listen: false)
+        .getCurrentUserSites(context: context);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final ThemeData themeData = Theme.of(context);
     return Scaffold(
       body: SafeArea(
         top: false,

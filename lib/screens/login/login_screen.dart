@@ -25,8 +25,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormFieldState> _loginPasswordKey =
       GlobalKey<FormFieldState>();
 
-  bool _isStaffLogin = true;
+  bool _isStaffLogin = false;
+  bool _isVisitorLogin = false;
   bool _isVisible = false;
+  bool _isOwnerLogin = true;
 
   Color getFillColor(FocusNode focusNode) =>
       focusNode.hasFocus ? Colors.white : kStrokeColor;
@@ -76,7 +78,25 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextButton(
                       onPressed: () {
                         setState(() {
+                          _isOwnerLogin = true;
+                          _isStaffLogin = false;
+                          _isVisitorLogin = false;
+                        });
+                      },
+                      child: Text(
+                        'I am owner',
+                        style: themeData.textTheme.button?.copyWith(
+                            color: _isOwnerLogin
+                                ? themeData.colorScheme.primary
+                                : kStrokeColor),
+                      )),
+                  Text(' / '),
+                  TextButton(
+                      onPressed: () {
+                        setState(() {
                           _isStaffLogin = true;
+                          _isVisitorLogin = false;
+                          _isOwnerLogin = false;
                         });
                       },
                       child: Text(
@@ -90,13 +110,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextButton(
                       onPressed: () {
                         setState(() {
+                          _isVisitorLogin = true;
                           _isStaffLogin = false;
+                          _isOwnerLogin = false;
                         });
                       },
                       child: Text(
                         'I am Visitor',
                         style: themeData.textTheme.button?.copyWith(
-                            color: !_isStaffLogin
+                            color: _isVisitorLogin
                                 ? themeData.colorScheme.primary
                                 : kStrokeColor),
                       ))
@@ -203,12 +225,18 @@ class _LoginScreenState extends State<LoginScreen> {
     final String mail = _loginTextEditingController.text.toString();
     final String password = _passwordTextEditingController.text.toString();
 
+    int signInType = _isStaffLogin
+        ? 1
+        : _isVisitorLogin
+            ? 2
+            : 3;
+
     if (_loginMailKey.currentState?.validate() == true &&
         _loginPasswordKey.currentState?.validate() == true) {
       String? responce = await userRepository.login(
         email: mail,
         password: password,
-        signInType: _isStaffLogin ? 1 : 2,
+        signInType: signInType,
         context: context,
       );
 

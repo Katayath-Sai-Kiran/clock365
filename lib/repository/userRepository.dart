@@ -61,12 +61,20 @@ class UserRepository extends ChangeNotifier {
                 OrganizationModel.fromJson(userJson["current_org"]);
             //update user data with organization model
             userJson["current_org"] = org;
-            //get a clock user instance to store cache
             ClockUser user = ClockUser.fromJson(userJson);
             //cache the current user
             Hive.box(kUserBox).put(kCurrentUserKey, user);
-            //redirect to modification screen
-            Navigator.of(context).pushNamed(kLocationModificationRoute);
+
+            if (signInType == 1) {
+              Navigator.of(context)
+                  .pushNamedAndRemoveUntil(kScanQr, (route) => false);
+            } else if (signInType == 2) {
+              Navigator.of(context)
+                  .pushNamedAndRemoveUntil(kScanQr, (route) => false);
+            } else {
+              Navigator.of(context).pushNamed(kLocationModificationRoute);
+
+            }
           } else {
             //cache the user Data
             //convert the organization model
@@ -80,8 +88,25 @@ class UserRepository extends ChangeNotifier {
             Hive.box(kUserBox).put(kCurrentUserKey, user);
             await Hive.box(kUserBox).put("isLoggedIn", true);
 
-            Navigator.of(context)
-                .pushNamedAndRemoveUntil(kMainScreen, (route) => false);
+            
+            if (signInType == 1) {
+              await Hive.box(kUserBox).put(kSignInType, 1);
+
+              Navigator.of(context)
+                  .pushNamedAndRemoveUntil(kScanQr, (route) => false);
+            } else if (signInType == 2) {
+              await Hive.box(kUserBox).put(kSignInType, 2);
+
+              Navigator.of(context)
+                  .pushNamedAndRemoveUntil(kScanQr, (route) => false);
+            } else {
+              await Hive.box(kUserBox).put(kSignInType, 3);
+
+              Navigator.of(context)
+                  .pushNamedAndRemoveUntil(kMainScreen, (route) => false);
+            }
+
+          
           }
         } else {
           //user not verified
@@ -220,89 +245,73 @@ class UserRepository extends ChangeNotifier {
     required File profileImage,
     required BuildContext context,
   }) async {
-    print("$organizationName $userId $signInType");
-    var request = http.MultipartRequest("PUT", Uri.parse(kstaffSignInEndPoint));
-    request.files.add(
-      await http.MultipartFile.fromPath("photo", profileImage.path),
-    );
-    request.fields.addAll({
-      "user_id": userId,
-      "org_name": organizationName,
-      "signin_type": signInType.toString(),
-    });
-
-    http.StreamedResponse response = await request.send();
-    var res = response.stream.asBroadcastStream().toString();
-    if (res.toString().contains("413 Request Entity Too Large")) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.all(16.0),
-          content: Row(
-            children: [
-              Icon(
-                Icons.warning_amber_outlined,
-                color: Colors.orange,
-              ),
-              SizedBox(width: 16.0),
-              Flexible(
-                child: Text(
-                  "Image Is too large to upload please select another image",
-                  maxLines: 5,
-                  softWrap: true,
-                ),
-              ),
-            ],
-          ),
-        ),
+    try {
+      var request =
+          http.MultipartRequest("PUT", Uri.parse(kstaffSignInEndPoint));
+      request.files.add(
+        await http.MultipartFile.fromPath("photo", profileImage.path),
       );
-    } else {
-      print("response from manual signIn $res");
-      Map<String, dynamic> organization =
-          jsonDecode(await response.stream.bytesToString());
-      List previousStaff = organization["staff"];
-      List<OrganizationModel> updatedStaff = [];
-      List<ClockUser> parsedStaff = [];
-
-      previousStaff.forEach((currentStaffMember) {
-        //get organizations list of ids
-        List organizations = currentStaffMember["organizations"];
-        //parse organizations
-        List<OrganizationModel> parsedOrganizations = organizations
-            .map((currentOrganization) => OrganizationModel()
-              ..organizationId = currentOrganization["\$oid"])
-            .toList();
-        //update current organizations with parsed orgs
-        currentStaffMember["organizations"] = parsedOrganizations;
-
-        //get current organization
-
-        Map<String, dynamic> currentOrg = currentStaffMember["current_org"];
-        OrganizationModel parsedOrg = OrganizationModel()
-          ..organizationId = currentOrg["\$oid"];
-        //update current org
-        currentStaffMember["current_org"] = parsedOrg;
-
-        parsedStaff.add(
-            ClockUser.fromJson(currentStaffMember as Map<String, dynamic>));
+      request.fields.addAll({
+        "user_id": userId,
+        "org_name": organizationName,
+        "signin_type": signInType.toString(),
       });
 
-      organization["staff"] = parsedStaff;
-      OrganizationModel changedOrganization = OrganizationModel()
-        ..organizationName = organization["name"]
-        ..organizationId = organization["_id"]["\$oid"]
-        ..colorCode = organization["color_code"]
-        ..colorOpacity = organization["color_opacity"]
-        ..createdBy = organization["created_by"]["\$oid"]
-        ..staffSignIn = organization["staff_sign_in"]
-        ..visitorSignIn = organization["visitor_sign_in"];
+      http.StreamedResponse response = await request.send();
+      var res = response.stream.asBroadcastStream().toString();
+      if (res.toString().contains("413 Request Entity Too Large")) {
+        _customWidgets.failureToste(
+            text: "Image Is too large to upload please select another image",
+            context: context);
+      } else {
+        print("response from manual signIn $res");
+        Map<String, dynamic> organization =
+            jsonDecode(await response.stream.bytesToString());
+        List previousStaff = organization["staff"];
+        List<ClockUser> parsedStaff = [];
 
-      ClockUser user = Hive.box(kUserBox).get(kCurrentUserKey);
-      user.currentOrganization = changedOrganization;
-      await Hive.box(kUserBox).put(kCurrentUserKey, user);
+        previousStaff.forEach((currentStaffMember) {
+          //get organizations list of ids
+          List organizations = currentStaffMember["organizations"];
+          //parse organizations
+          List<OrganizationModel> parsedOrganizations = organizations
+              .map((currentOrganization) => OrganizationModel()
+                ..organizationId = currentOrganization["\$oid"])
+              .toList();
+          //update current organizations with parsed orgs
+          currentStaffMember["organizations"] = parsedOrganizations;
 
-      Navigator.of(context)
-          .pushNamedAndRemoveUntil(kMainScreen, (route) => false);
+          //get current organization
+
+          Map<String, dynamic> currentOrg = currentStaffMember["current_org"];
+          OrganizationModel parsedOrg = OrganizationModel()
+            ..organizationId = currentOrg["\$oid"];
+          //update current org
+          currentStaffMember["current_org"] = parsedOrg;
+
+          parsedStaff.add(
+              ClockUser.fromJson(currentStaffMember as Map<String, dynamic>));
+        });
+
+        organization["staff"] = parsedStaff;
+        OrganizationModel changedOrganization = OrganizationModel()
+          ..organizationName = organization["name"]
+          ..organizationId = organization["_id"]["\$oid"]
+          ..colorCode = organization["color_code"]
+          ..colorOpacity = organization["color_opacity"]
+          ..createdBy = organization["created_by"]["\$oid"]
+          ..staffSignIn = organization["staff_sign_in"]
+          ..visitorSignIn = organization["visitor_sign_in"];
+
+        ClockUser user = Hive.box(kUserBox).get(kCurrentUserKey);
+        user.currentOrganization = changedOrganization;
+        await Hive.box(kUserBox).put(kCurrentUserKey, user);
+
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil(kMainScreen, (route) => false);
+      }
+    } catch (error) {
+      print(error);
     }
   }
 
@@ -329,26 +338,5 @@ class UserRepository extends ChangeNotifier {
       print("error $error");
       return [];
     }
-  }
-
-  Future manualSignInVisitor(
-      {required String organizationName,
-      required int signInType,
-      required File profileImage}) async {
-    try {
-      var request =
-          http.MultipartRequest("PUT", Uri.parse(kGetVisitorSignedInEndpoint));
-      request.files.add(
-        await http.MultipartFile.fromPath("photo", profileImage.path),
-      );
-      request.fields.addAll({
-        "user_id": userId,
-        "org_name": organizationName,
-        "signin_type": signInType.toString(),
-      });
-
-      http.StreamedResponse response = await request.send();
-      var res = response.stream.asBroadcastStream().toString();
-    } catch (error) {}
   }
 }

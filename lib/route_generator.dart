@@ -13,6 +13,7 @@ import 'package:clock365/screens/location/location_screen.dart';
 import 'package:clock365/screens/login/login_screen.dart';
 import 'package:clock365/screens/main/main_screen.dart';
 import 'package:clock365/screens/profile/profile_detail.dart';
+import 'package:clock365/screens/qrTest.dart';
 import 'package:clock365/screens/signup/signup_introduce.dart';
 import 'package:clock365/screens/signup/signup_password.dart';
 import 'package:clock365/screens/signup/signup_screen.dart';
@@ -33,7 +34,7 @@ class RouteGenerator {
         );
       case kSignupIntroduce:
         return MaterialPageRoute(
-            builder: (context) => SignupIntroduceScreen(),
+          builder: (context) => SignupIntroduceScreen(),
           settings: settings,
         );
       case kSignupPasswordRoute:
@@ -58,12 +59,12 @@ class RouteGenerator {
         );
       case kEditStaffRoute:
         return MaterialPageRoute(
-            builder: (context) => EditStaffScreen(),
+          builder: (context) => EditStaffScreen(),
           settings: settings,
         );
       case kLocationRoute:
         return MaterialPageRoute(
-            builder: (context) => LocationScreen(),
+          builder: (context) => LocationScreen(),
           settings: settings,
         );
       case kReadySetGoScreen:
@@ -83,12 +84,12 @@ class RouteGenerator {
         );
       case kVisitorSignInDetailsScreen:
         return MaterialPageRoute(
-            builder: (context) => VisitorSignInDetailsScreen(),
+          builder: (context) => VisitorSignInDetailsScreen(),
           settings: settings,
         );
       case kUserConfirmSignInScreen:
         return MaterialPageRoute(
-            builder: (context) => UserConfirmSignInScreen(),
+          builder: (context) => UserConfirmSignInScreen(),
           settings: settings,
         );
       case kCapturePhotoScreen:
@@ -106,6 +107,9 @@ class RouteGenerator {
           builder: (context) => ProfileDetailScreen(),
           settings: settings,
         );
+      case kScanQr:
+        return MaterialPageRoute(
+            builder: (context) => QRViewExample(), settings: settings);
       default:
         throw Exception('Unknown route ${settings.name}');
     }

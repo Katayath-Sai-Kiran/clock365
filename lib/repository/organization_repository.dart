@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:clock365/constants.dart';
+import 'package:clock365/customWidgets.dart';
 import 'package:clock365/models/OrganizationModel.dart';
 import 'package:clock365/models/clock_user.dart';
 import 'package:clock365/repository/userRepository.dart';
@@ -11,6 +12,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
 class OrganizationRepository extends ChangeNotifier {
+  final CustomWidgets _customWidgets = CustomWidgets();
   final Map<String, String> headers = {
     "Content-Type": "application/json",
   };
@@ -40,14 +42,6 @@ class OrganizationRepository extends ChangeNotifier {
     Map result = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          duration: Duration(milliseconds: 2000),
-          backgroundColor: Colors.black,
-          content: Text(result["msg"]),
-        ),
-      );
-
       final String userId = Hive.box(kUserBox).get(kcurrentUserId);
 
       Map userData = Hive.box(kUserBox).get(userId);
@@ -90,14 +84,9 @@ class OrganizationRepository extends ChangeNotifier {
           "currentOrganization", (value) => currentOfflineOrganization);
 
       await Hive.box(kUserBox).put(userId, userData);
+      _customWidgets.successToste(text: result["msg"], context: context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          duration: Duration(milliseconds: 2000),
-          backgroundColor: Colors.black,
-          content: Text(result["msg"]),
-        ),
-      );
+      _customWidgets.failureToste(text: result["msg"], context: context);
     }
   }
 
@@ -165,13 +154,7 @@ class OrganizationRepository extends ChangeNotifier {
 
       await Hive.box(kUserBox).put(userId, currentOfflineUserData);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          duration: Duration(milliseconds: 2000),
-          backgroundColor: Colors.black,
-          content: Text(result["msg"]),
-        ),
-      );
+      _customWidgets.failureToste(text: result["msg"], context: context);
     }
   }
 
@@ -213,33 +196,14 @@ class OrganizationRepository extends ChangeNotifier {
         user.organizations = [organizationModel, ...previousOrganizations];
         await Hive.box(kUserBox).put(kCurrentUserKey, user);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("organization successfully added"),
-          ),
-        );
+        _customWidgets.successToste(
+            text: "Organization successfully registered", context: context);
       } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(response.body)));
+        Map result = jsonDecode(response.body);
+        _customWidgets.failureToste(text: result["msg"], context: context);
       }
     } catch (e) {
-      print(e.toString());
-    }
-  }
-
-  Future staffSignIntoOrganization({
-    required String organizationId,
-    required String userId,
-  }) async {
-    try {
-      http.Response staffSignInresponse = await http.put(
-        Uri.parse(kstaffSignInEndPoint),
-        body: jsonEncode({"org_id": "", "user_id": "", "signin_type": 1}),
-        headers: headers,
-      );
-      print("staff signed In $staffSignInresponse");
-    } catch (error) {
-      print("error while staff singing $error");
+      _customWidgets.failureToste(text: e.toString(), context: context);
     }
   }
 
@@ -252,7 +216,6 @@ class OrganizationRepository extends ChangeNotifier {
       List<OrganizationModel> parsedOrganizations = [];
       if (response.statusCode == 200) {
         organizations = jsonDecode(response.body);
-        print(organizations);
 
         organizations.forEach((organization) {
           List<ClockUser>? staff = [];
@@ -340,7 +303,6 @@ class OrganizationRepository extends ChangeNotifier {
       required final BuildContext context}) async {
     List<ClockUser> staff = [];
     try {
-      print("fetching current org signed staff");
       http.Response response = await http.get(Uri.parse(
           kGetStaffSignedInEndpoint.replaceFirst("org_id", organizationId)));
       if (response.statusCode == 200) {
@@ -348,7 +310,6 @@ class OrganizationRepository extends ChangeNotifier {
         staff = responseList
             .map((e) => ClockUser.fromJson(e as Map<String, dynamic>))
             .toList();
-        print("fetched staff $staff");
         return staff;
       } else {
         print(response.body);
@@ -363,7 +324,6 @@ class OrganizationRepository extends ChangeNotifier {
       required final BuildContext context}) async {
     List<ClockUser> staff = [];
     try {
-      print("fetching current org signed visitors");
       http.Response response = await http.get(Uri.parse(
           kGetVisitorSignedInEndpoint.replaceFirst("org_id", organizationId)));
       if (response.statusCode == 200) {
@@ -416,8 +376,6 @@ class OrganizationRepository extends ChangeNotifier {
             .map((e) => OrganizationModel.fromJson(e as Map<String, dynamic>))
             .toList();
 
-        print("fetched orgs $organizations");
-
         return organizations;
       } else {
         print(response.body);
@@ -425,6 +383,39 @@ class OrganizationRepository extends ChangeNotifier {
       }
     } catch (error) {
       print("error is $error");
+    }
+  }
+
+  Future<OrganizationModel> getScannedOrganizationDetails(
+      {required BuildContext context, required String orgId}) async {
+    OrganizationModel scannedOrganization = OrganizationModel();
+
+    try {
+      http.Response response = await http.get(Uri.parse(
+          kGetScannedOrgDetailsEndPoint.replaceFirst("org_id", orgId)));
+      if (response.statusCode == 200) {
+        List organization = jsonDecode(response.body);
+        Map parsedOrganization = organization[0];
+        List staff = parsedOrganization["staff"];
+        List<ClockUser> parsedStaff = staff
+            .map((member) => ClockUser()..id = member["_id"]["\$oid"])
+            .toList();
+
+        scannedOrganization = OrganizationModel()
+          ..staff = parsedStaff
+          ..staffSignIn = parsedOrganization["staff_sign_in"]
+          ..visitorSignIn = parsedOrganization["visitor_sign_in"]
+          ..organizationName = parsedOrganization["name"];
+
+        return scannedOrganization;
+      } else {
+        Map message = jsonDecode(response.body);
+        _customWidgets.failureToste(text: message["msg"], context: context);
+        return scannedOrganization;
+      }
+    } catch (error) {
+      _customWidgets.failureToste(text: error.toString(), context: context);
+      return scannedOrganization;
     }
   }
 }
