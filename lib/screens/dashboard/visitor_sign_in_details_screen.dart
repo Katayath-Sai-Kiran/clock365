@@ -50,8 +50,7 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
     final OrganizationRepository organizationRepository =
         Provider.of(context, listen: false);
     final ClockUser currentUser = Hive.box(kUserBox).get(kCurrentUserKey);
-    final double _width = MediaQuery.of(context).size.width;
-    final double _height = MediaQuery.of(context).size.height;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(S.of(context).signInDetails),
@@ -82,14 +81,14 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
                       suggestionsCallback: (pattern) async {
                         List<OrganizationModel> matchedOrganizations =
                             await organizationRepository
-                                .getOrganizationSuggetions(pattern: pattern);
+                                .getOrganizationSuggetions(
+                                    pattern: pattern, context: context);
                         if (matchedOrganizations.length > 0) {
                           return matchedOrganizations;
                         } else {
                           return [
                             OrganizationModel(
-                                organizationName:
-                                    "No Organization Found"),
+                                organizationName: "No Organizations found"),
                           ];
                         }
                       },
@@ -102,7 +101,7 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
                           (OrganizationModel selectedOrganization) {
                         setState(() {
                           if (selectedOrganization.organizationName ==
-                              "No Organization Found") {
+                              "No Organizations found") {
                             _orgNameController.text = "";
                           } else {
                             _orgNameController.text = selectedOrganization
@@ -154,127 +153,12 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
                                     : false;
 
                             if (_isLoggingInCurrentOrg) {
-                              //logging into current Org
-                              if (_selectedOrganization!.visitorSignIn ==
-                                  true) {
-                                //visitor has permission to login
-                                Get.to(
-                                  () => VisitorSignInConfirm(
-                                      selectedOrganization:
-                                          _selectedOrganization),
-                                );
-                              } else {
-                                // Get.to(
-                                //   () => VisitorSignInConfirm(
-                                //       selectedOrganization:
-                                //           _selectedOrganization),
-                                // );
-                                // visitor is not allowed to login in
-
-                                _customWidgets.failureToste(
-                                    text:
-                                        "Visitors Cannot SignIn Into ${_selectedOrganization!.organizationName.toString()}",
-                                    context: context);
-                              }
+                              //visitor signIn into current Organization
+                              currentOrganizationSignin();
                             } else {
-                              if (_selectedOrganization!.visitorSignIn ==
-                                  true) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    backgroundColor: Colors.white,
-                                    elevation: 8.0,
-                                    behavior: SnackBarBehavior.floating,
-                                    content: Container(
-                                      height: 100,
-                                      width: _width,
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceAround,
-                                        children: [
-                                          Text(
-                                            "Are you sure to logout !",
-                                            style: TextStyle(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .primary,
-                                            ),
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceAround,
-                                            children: [
-                                              Container(
-                                                width: _width * 0.3,
-                                                height: _height * 0.05,
-                                                child: OutlinedButton(
-                                                  style: ButtonStyle(
-                                                    backgroundColor:
-                                                        MaterialStateProperty
-                                                            .all(Colors.white),
-                                                    side: MaterialStateProperty
-                                                        .all(BorderSide(
-                                                      color: Theme.of(context)
-                                                          .colorScheme
-                                                          .primary,
-                                                    )),
-                                                  ),
-                                                  onPressed: () {
-                                                    ScaffoldMessenger.of(
-                                                            context)
-                                                        .hideCurrentSnackBar();
+                              //visitor signIn into different Organization
 
-                                                    //Scaffold.of(context).is
-                                                  },
-                                                  child: Text(
-                                                    "Cancle",
-                                                    style: TextStyle(
-                                                        color: Theme.of(context)
-                                                            .colorScheme
-                                                            .primary),
-                                                  ),
-                                                ),
-                                              ),
-                                              Container(
-                                                width: _width * 0.3,
-                                                height: _height * 0.05,
-                                                child: OutlinedButton(
-                                                  style: ButtonStyle(
-                                                    backgroundColor:
-                                                        MaterialStateProperty
-                                                            .all(Theme.of(
-                                                                    context)
-                                                                .colorScheme
-                                                                .primary),
-                                                  ),
-                                                  onPressed: () {
-                                                    ScaffoldMessenger.of(
-                                                            context)
-                                                        .hideCurrentSnackBar();
-
-                                                    Navigator.of(context).pushNamed(
-                                                        kVisitorSignInDetailsScreen);
-                                                  },
-                                                  child: Text("Logout"),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    margin: EdgeInsets.all(16.0),
-                                  ),
-                                );
-                              } else {
-                                // Get.to(() => VisitorSignInConfirm(
-                                //       selectedOrganization:
-                                //           _selectedOrganization,
-                                //     ));
-                                _customWidgets.failureToste(
-                                    text:
-                                        "Visitors Cannot SignIn Into ${_selectedOrganization!.organizationName.toString()}",
-                                    context: context);
-                              }
+                              otherOrganzationSignin();
                             }
                           } else {
                             _customWidgets.failureToste(
@@ -298,6 +182,40 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
       ),
     );
   }
+
+  void otherOrganzationSignin() {
+    if (_selectedOrganization!.visitorSignIn == true) {
+      _customWidgets.snacbarWithTwoButtons2(
+          context: context,
+          primaryCallback: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            Navigator.of(context).pushNamed(kVisitorSignInDetailsScreen);
+          },
+          secondaryCallback: () =>
+              ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+          primatyText: "Logout",
+          secondaryText: "Cancle",
+          titleText: "Are you sure to logout !");
+    } else {
+      _customWidgets.failureToste(
+          text:
+              "Visitors Cannot SignIn Into ${_selectedOrganization!.organizationName.toString()}",
+          context: context);
+    }
+  }
+
+  void currentOrganizationSignin() {
+    final String orgName = _selectedOrganization!.organizationName.toString();
+    if (_selectedOrganization!.visitorSignIn == true) {
+      //visitor has permission to login
+      Get.to(() =>
+          VisitorSignInConfirm(selectedOrganization: _selectedOrganization));
+    } else {
+      //visitor is not allowed to login in
+      _customWidgets.failureToste(
+          text: "Visitors Cannot SignIn Into $orgName", context: context);
+    }
+  }
 }
 
 class SearchOrganizationItem extends StatelessWidget {
@@ -317,7 +235,7 @@ class SearchOrganizationItem extends StatelessWidget {
               child: Container(
             width: Get.width,
             alignment: Alignment.centerLeft,
-            height: organization.organizationName != "No Organizations Found"
+            height: organization.organizationName != "No Organizations found"
                 ? 24
                 : 38,
             child: Text(
@@ -328,7 +246,7 @@ class SearchOrganizationItem extends StatelessWidget {
           SizedBox(
             width: 16,
           ),
-          if (organization.organizationName != "No Organizations Found")
+          if (organization.organizationName != "No Organizations found")
             IconButton(
               onPressed: () {},
               icon: SizedBox(

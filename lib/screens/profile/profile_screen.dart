@@ -141,7 +141,7 @@ class ProfileStatus extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Present'),
+                  Text('Absent'),
                   SizedBox(
                     width: 16,
                   ),

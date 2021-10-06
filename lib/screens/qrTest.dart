@@ -4,13 +4,13 @@ import 'dart:io';
 import 'package:clock365/constants.dart';
 import 'package:clock365/customWidgets.dart';
 import 'package:clock365/models/clock_user.dart';
-import 'package:clock365/models/organization.dart';
 import 'package:clock365/repository/organization_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:clock365/models/OrganizationModel.dart';
+import 'package:get/get.dart';
 
 class QRViewExample extends StatefulWidget {
   @override
@@ -121,7 +121,10 @@ class _QRViewExampleState extends State<QRViewExample> {
         print(result!.code);
         this.controller!.stopCamera();
       });
-      OrganizationModel scannedOrganization = await organizationRepository
+          Get.back();
+
+      OrganizationModel scannedOrganization;
+      scannedOrganization = await organizationRepository
           .getScannedOrganizationDetails(context: context, orgId: result!.code);
 
       List<ClockUser>? staff = scannedOrganization.staff;

@@ -5,8 +5,10 @@ import 'package:clock365/constants.dart';
 import 'package:clock365/customWidgets.dart';
 import 'package:clock365/models/OrganizationModel.dart';
 import 'package:clock365/models/clock_user.dart';
+import 'package:clock365/screens/dashboard/user_dashboard.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -66,14 +68,16 @@ class UserRepository extends ChangeNotifier {
             Hive.box(kUserBox).put(kCurrentUserKey, user);
 
             if (signInType == 1) {
-              Navigator.of(context)
-                  .pushNamedAndRemoveUntil(kScanQr, (route) => false);
+              await Hive.box(kUserBox).put(kSignInType, 1);
+              Get.offAll(() => UserDashboard());
             } else if (signInType == 2) {
-              Navigator.of(context)
-                  .pushNamedAndRemoveUntil(kScanQr, (route) => false);
-            } else {
-              Navigator.of(context).pushNamed(kLocationModificationRoute);
+              await Hive.box(kUserBox).put(kSignInType, 2);
+              Get.offAll(() => UserDashboard());
 
+            } else {
+              await Hive.box(kUserBox).put(kSignInType, 3);
+
+              Navigator.of(context).pushNamed(kLocationModificationRoute);
             }
           } else {
             //cache the user Data
@@ -88,25 +92,20 @@ class UserRepository extends ChangeNotifier {
             Hive.box(kUserBox).put(kCurrentUserKey, user);
             await Hive.box(kUserBox).put("isLoggedIn", true);
 
-            
             if (signInType == 1) {
               await Hive.box(kUserBox).put(kSignInType, 1);
+              Get.offAll(() => UserDashboard());
 
-              Navigator.of(context)
-                  .pushNamedAndRemoveUntil(kScanQr, (route) => false);
             } else if (signInType == 2) {
               await Hive.box(kUserBox).put(kSignInType, 2);
+              Get.offAll(() => UserDashboard());
 
-              Navigator.of(context)
-                  .pushNamedAndRemoveUntil(kScanQr, (route) => false);
             } else {
               await Hive.box(kUserBox).put(kSignInType, 3);
 
               Navigator.of(context)
                   .pushNamedAndRemoveUntil(kMainScreen, (route) => false);
             }
-
-          
           }
         } else {
           //user not verified
@@ -180,7 +179,6 @@ class UserRepository extends ChangeNotifier {
     required Map data,
   }) async {
     try {
-      print(data);
       String body = jsonEncode(
         {
           "email": data["mail"],
@@ -265,6 +263,7 @@ class UserRepository extends ChangeNotifier {
             context: context);
       } else {
         print("response from manual signIn $res");
+
         Map<String, dynamic> organization =
             jsonDecode(await response.stream.bytesToString());
         List previousStaff = organization["staff"];
@@ -337,6 +336,24 @@ class UserRepository extends ChangeNotifier {
     } catch (error) {
       print("error $error");
       return [];
+    }
+  }
+
+  Future updateSignInStatus(
+      {required Map data, required BuildContext context}) async {
+    try {
+      http.Response response = await http.put(
+        Uri.parse(kUpdateOrganizationData),
+        headers: headers,
+        body: jsonEncode(data),
+      );
+      if (response.statusCode == 200) {
+        print(response.body);
+      } else {
+        print(response.body);
+      }
+    } catch (error) {
+      _customWidgets.failureToste(text: error.toString(), context: context);
     }
   }
 }

@@ -29,9 +29,14 @@ class ClockUserProvider extends ChangeNotifier {
     }
   }
 
+  Future updateCurrentUserSites(
+      {required OrganizationModel addedOrganizarion}) async {
+    currentUserOrganizations!.add(addedOrganizarion);
+    notifyListeners();
+  }
+
   Future getCurrentUserSites({required BuildContext context}) async {
     final ClockUser clockUser = Hive.box(kUserBox).get(kCurrentUserKey);
-    print(clockUser.id.toString());
 
     try {
       http.Response response = await http.get(Uri.parse(kGetCurrentSitesEndPoint

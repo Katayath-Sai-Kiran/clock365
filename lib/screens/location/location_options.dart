@@ -1,10 +1,12 @@
 import 'package:clock365/constants.dart';
 import 'package:clock365/generated/l10n.dart';
+import 'package:clock365/repository/userRepository.dart';
 import 'package:clock365/screens/location/location_screen.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:clock365/models/OrganizationModel.dart';
+import 'package:provider/provider.dart';
 
 class LocationOptionsScreen extends StatefulWidget {
   final LocationOptionArguments? arguments;
@@ -37,6 +39,8 @@ class _LocationOptionsScreenState extends State<LocationOptionsScreen> {
     final Map arguements = ModalRoute.of(context)?.settings.arguments as Map;
     OrganizationModel currentOrganization = arguements["organization"];
     _orgNameController..text = currentOrganization.organizationName.toString();
+    final UserRepository userRepository =
+        Provider.of<UserRepository>(context, listen: false);
 
     return Scaffold(
         appBar: AppBar(
@@ -104,6 +108,12 @@ class _LocationOptionsScreenState extends State<LocationOptionsScreen> {
               margin: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               child: ElevatedButton(
                 onPressed: () {
+                  print(currentOrganization.organizationId);
+                  userRepository.updateSignInStatus(data: {
+                    "org_id": currentOrganization.organizationId,
+                    "staff_sign_in": currentOrganization.staffSignIn,
+                    "visitor_sign_in": currentOrganization.visitorSignIn,
+                  }, context: context);
                   Navigator.of(context).pushNamed(
                     kEditStaffRoute,
                     arguments: currentOrganization,

@@ -1,3 +1,4 @@
+import 'package:clock365/constants.dart';
 import 'package:clock365/generated/l10n.dart';
 import 'package:clock365/models/clock_user.dart';
 import 'package:clock365/providers/user_provider.dart';
@@ -22,7 +23,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
   Widget build(BuildContext context) {
     final OrganizationModel curretnOrganization =
         ModalRoute.of(context)!.settings.arguments as OrganizationModel;
-    final String orgId = curretnOrganization.organizationId!;
+    final String orgId = curretnOrganization.organizationId.toString();
 
     final double _height = MediaQuery.of(context).size.height;
     final ThemeData themeData = Theme.of(context);
@@ -92,8 +93,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                         organizationId: orgId,
                         context: context,
                       );
-                      List<ClockUser>? staff = curretnOrganization.staff;
-                      staff!.add(clockUser);
+                      
 
                       provider.addStaff(newStaffMember: clockUser);
                     },
@@ -128,10 +128,10 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                   ElevatedButton(
                     onPressed: () async {
                       print(staff);
-                      // Navigator.of(context).pushNamed(
-                      //   kReadySetGoScreen,
-                      //   arguments: curretnOrganization,
-                      // );
+                      Navigator.of(context).pushNamed(
+                        kReadySetGoScreen,
+                        arguments: curretnOrganization,
+                      );
                     },
                     child: Text(S.of(context).actionContinue),
                   )
@@ -196,9 +196,7 @@ class _MemberItemState extends State<MemberItem> {
                   organizationId: widget.orgId,
                   context: context,
                 );
-                List<ClockUser>? staff = widget.curretnOrganization.staff;
 
-                staff!.removeWhere((user) => user.id == widget.clockUser.id);
 
                 provider.deleteStaff(staffIndex: widget.index);
               }

@@ -1,5 +1,6 @@
 // Hive types
 
+
 import 'package:clock365/models/clock_user.dart';
 import 'package:clock365/models/destination.dart';
 import 'package:clock365/screens/dashboard/dashboard_screen.dart';
@@ -78,6 +79,7 @@ const String kUserConfirmSignInScreen = '/userConfirmSignIn';
 const String kCapturePhotoScreen = '/capturePhoto';
 const String kProfileDetailRoute = '/profileDetail';
 const String kScanQr = '/scanQr';
+const String kUserDashboard = '/userDashboard';
 
 // Colors
 final allColors = <Color>[
@@ -112,8 +114,9 @@ const String kGetVisitorSignedInEndpoint =
 
 const String kGetCurrentOrganizations = "$kBaseUrl/api/v1/user/user_id/orgs";
 
-const String kUpdateSignInStatus = "$kBaseUrl/api/v1/org";
+const String kUpdateOrganizationData = "$kBaseUrl/api/v1/org";
 const String kGetScannedOrgDetailsEndPoint = "$kBaseUrl/api/v1/org/org_id";
+const String kGetAttendenceDetailsEndPoint = "$kBaseUrl/api/v1/org/";
 
 
 

@@ -4,6 +4,7 @@ import 'package:clock365/providers/organization_provider.dart';
 import 'package:clock365/providers/user_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -20,13 +21,24 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   void initState() {
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      
+      Provider.of<OrganizationProvider>(context, listen: false)
+          .updateOrganizationLoadingStatus(updatedState: true);
+      Provider.of<OrganizationProvider>(context, listen: false)
+          .getCurrentOrganizationSignedInVisitors(context: context);
+      Provider.of<OrganizationProvider>(context, listen: false)
+          .getCurrentOrganizationSignedInStaff(context: context);
+      Provider.of<ClockUserProvider>(context, listen: false)
+          .getCurrentUserSites(context: context);
+      Provider.of<OrganizationProvider>(context, listen: false)
+          .getCurrentOrganizationStaff(context: context);
+
+      Provider.of<OrganizationProvider>(context, listen: false)
+          .updateOrganizationLoadingStatus(updatedState: false);
+    });
     super.initState();
-    Provider.of<OrganizationProvider>(context, listen: false)
-        .getCurrentOrganizationSignedInVisitors(context: context);
-    Provider.of<OrganizationProvider>(context, listen: false)
-        .getCurrentOrganizationSignedInStaff(context: context);
-    Provider.of<ClockUserProvider>(context, listen: false)
-        .getCurrentUserSites(context: context);
+  
   }
 
   @override

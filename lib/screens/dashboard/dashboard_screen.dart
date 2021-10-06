@@ -4,7 +4,6 @@ import 'package:clock365/constants.dart';
 import 'package:clock365/generated/l10n.dart';
 import 'package:clock365/models/clock_user.dart';
 import 'package:clock365/providers/organization_provider.dart';
-import 'package:clock365/repository/organization_repository.dart';
 import 'package:clock365/screens/qrTest.dart';
 
 import 'package:clock365/theme/colors.dart';
@@ -25,18 +24,22 @@ class DashboardScreen extends StatefulWidget {
   _DashboardScreenState createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>
+    with TickerProviderStateMixin {
   TabController? _tabController;
+  int tabIndex = 0;
   @override
   void initState() {
-    // Provider.of<OrganizationProvider>(context, listen: false)
-    //     .getCurrentOrganizationSignedInVisitors(context: context);
-    // Provider.of<OrganizationProvider>(context, listen: false)
-    //     .getCurrentOrganizationSignedInStaff(context: context);
     super.initState();
 
-    // ClockUserProvider clockUserProvider = Provider.of(context, listen: false);
-    // await clockUserProvider.getCurrentUser();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController?.addListener(() {
+      if (_tabController!.indexIsChanging) {
+        setState(() {
+          tabIndex = _tabController!.index;
+        });
+      }
+    });
   }
 
   @override
@@ -153,7 +156,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     .textTheme
                                     .subtitle1!
                                     .copyWith(
-                                      color: _tabController?.index == 0
+                                      color: tabIndex == 0
                                           ? Colors.white
                                           : Colors.black87,
                                     ),
@@ -166,7 +169,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             child: Center(
                               child: Text(
                                 "Visitors",
-                                style: Theme.of(context).textTheme.subtitle1,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .subtitle1!
+                                    .copyWith(
+                                        color: tabIndex == 1
+                                            ? Colors.white
+                                            : Colors.black87),
                               ),
                             ),
                           ),
@@ -175,6 +184,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Container(
                         height: Get.height * 0.45,
                         child: TabBarView(
+                          controller: _tabController,
                           children: [
                             StaffList(
                                 organizationProvider: organizationProvider),
@@ -210,36 +220,38 @@ class _StaffListState extends State<StaffList> {
   @override
   Widget build(BuildContext context) {
     final List<ClockUser> staff =
-        widget.organizationProvider.currentOrganizationStaff;
+        widget.organizationProvider.currentOrganizationSignedInStaff;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          height: 16,
-        ),
-        staff.length > 0
-            ? ListView.builder(
-                physics: NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: staff.length,
-                itemBuilder: (context, index) => StaffItem(
-                  user: staff[index],
-                ),
-              )
-            : Padding(
-                padding: const EdgeInsets.only(top: 48.0, right: 16.0),
-                child: Center(
-                  child: SvgPicture.asset(
-                    "assets/no_users.svg",
-                    height: Get.height * 0.25,
-                    width: Get.width * 0.3,
-                  ),
-                ),
+    return widget.organizationProvider.isOrganizationDetailsLoading
+        ? Center(child: CircularProgressIndicator())
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: 16,
               ),
-      ],
-    );
+              staff.length > 0
+                  ? ListView.builder(
+                      physics: NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: staff.length,
+                      itemBuilder: (context, index) => StaffItem(
+                        user: staff[index],
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 48.0, right: 16.0),
+                      child: Center(
+                        child: SvgPicture.asset(
+                          "assets/no_users.svg",
+                          height: Get.height * 0.25,
+                          width: Get.width * 0.3,
+                        ),
+                      ),
+                    ),
+            ],
+          );
   }
 }
 
@@ -296,18 +308,18 @@ class VisitorList extends StatefulWidget {
 class _VisitorListState extends State<VisitorList> {
   @override
   Widget build(BuildContext context) {
-   final List<ClockUser> visitors =
+    final List<ClockUser> visitors =
         widget.organizationProvider.currentOrganizationVisitors;
 
     return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                height: 16,
-              ),
-              visitors.length > 0
-                  ? ListView.builder(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 16,
+        ),
+        visitors.length > 0
+            ? ListView.builder(
                 physics: NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 itemCount: visitors.length,
@@ -315,19 +327,18 @@ class _VisitorListState extends State<VisitorList> {
                   visitor: visitors[index],
                 ),
               )
-                  : Padding(
-                      padding: const EdgeInsets.only(top: 48.0, right: 16.0),
-                      child: Center(
-                        child: SvgPicture.asset(
-                          "assets/no_users.svg",
-                          height: Get.height * 0.2,
+            : Padding(
+                padding: const EdgeInsets.only(top: 48.0, right: 16.0),
+                child: Center(
+                  child: SvgPicture.asset(
+                    "assets/no_users.svg",
+                    height: Get.height * 0.2,
                     width: Get.width * 0.25,
-                        ),
-                      ),
-                    ),
-            ],
-          );
-        
+                  ),
+                ),
+              ),
+      ],
+    );
   }
 }
 
@@ -357,8 +368,8 @@ class VisitorItem extends StatelessWidget {
                 width: 16,
               ),
               Expanded(
-                  child: Text(visitor.name.toString(),
-                      style: Theme.of(context).textTheme.subtitle2),
+                child: Text(visitor.name.toString(),
+                    style: Theme.of(context).textTheme.subtitle2),
               )
             ],
           )),

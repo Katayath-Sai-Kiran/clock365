@@ -1,10 +1,8 @@
-import 'package:clock365/constants.dart';
 import 'package:clock365/models/clock_user.dart';
-import 'package:clock365/repository/organization_repository.dart';
+import 'package:clock365/providers/organization_provider.dart';
 import 'package:clock365/theme/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
 class StaffDetails extends StatelessWidget {
@@ -12,39 +10,29 @@ class StaffDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final OrganizationRepository organizationRepository =
-        Provider.of(context, listen: false);
-    final ClockUser currentUser = Hive.box(kUserBox).get(kCurrentUserKey);
+    final OrganizationProvider organizationRepository =
+        Provider.of<OrganizationProvider>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
         title: Text("Staff"),
       ),
-      body: FutureBuilder(
-          future: organizationRepository.getCurrentOrganizationStaff(
-              organizationId:
-                  currentUser.currentOrganization!.organizationId.toString(),
-              context: context),
-          builder: (context, AsyncSnapshot snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-            final List<ClockUser> staff = snapshot.data;
-            return Container(
+      body: Container(
               padding: EdgeInsets.all(16.0),
               height: Get.height,
               width: Get.width,
               child: ListView.builder(
-                itemCount: staff.length,
+                itemCount:
+              organizationRepository.currentOrganizationSignedInStaff.length,
                 itemBuilder: (_, int index) {
-                  return StaffItem(user: staff[index]);
+                  return StaffItem(
+                user: organizationRepository
+                    .currentOrganizationSignedInStaff[index]);
                 },
               ),
+      ),
             );
-          }),
-    );
+          
   }
 }
 

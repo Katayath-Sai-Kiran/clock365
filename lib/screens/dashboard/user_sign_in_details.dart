@@ -46,8 +46,6 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
   Widget build(BuildContext context) {
     final OrganizationRepository organizationRepository =
         Provider.of(context, listen: false);
-    final double _width = MediaQuery.of(context).size.width;
-    final double _height = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         title: Text(S.of(context).signInDetails),
@@ -73,7 +71,8 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
                       suggestionsCallback: (pattern) async {
                         List<OrganizationModel> matchedOrganizations =
                             await organizationRepository
-                                .getOrganizationSuggetions(pattern: pattern);
+                                .getOrganizationSuggetions(
+                                    pattern: pattern, context: context);
                         if (matchedOrganizations.length > 0) {
                           return matchedOrganizations;
                         } else {
@@ -149,197 +148,20 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
 
                             if (_isLoggingInCurrentOrg) {
                               //signinig into current organization
-                              if (_selectedOrganization!.staffSignIn == true) {
-                                List<ClockUser>? selectedOrganizationStaff =
-                                    _selectedOrganization!.staff;
-
-                                bool _canSignIn = false;
-                                selectedOrganizationStaff?.forEach((element) {
-                                  if (element.id == curentUser.id) {
-                                    _canSignIn = true;
-                                  }
-                                  if (_canSignIn) {
-                                    Navigator.of(context).pushNamed(
-                                      kUserConfirmSignInScreen,
-                                      arguments: _selectedOrganization,
-                                    );
-                                  } else {
-                                    _customWidgets.failureToste(
-                                        text:
-                                            "You are not registered with ${_selectedOrganization?.organizationName}",
-                                        context: context);
-                                  }
-                                });
-                              } else {
-                                _customWidgets.failureToste(
-                                    text:
-                                        "Staff Cannot SignIn Into ${_selectedOrganization!.organizationName}",
-                                    context: context);
-                              }
+                              currentOrganizationSignin();
                             } else {
                               //signing into new orgniazation
-                              if (_selectedOrganization!.staffSignIn == true) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    backgroundColor: Colors.white,
-                                    elevation: 8.0,
-                                    behavior: SnackBarBehavior.floating,
-                                    content: Container(
-                                      height: 100,
-                                      width: _width,
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceAround,
-                                        children: [
-                                          Text(
-                                            "Are you sure to logout !",
-                                            style: TextStyle(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .primary,
-                                            ),
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceAround,
-                                            children: [
-                                              Container(
-                                                width: _width * 0.3,
-                                                height: _height * 0.05,
-                                                child: OutlinedButton(
-                                                  style: ButtonStyle(
-                                                    backgroundColor:
-                                                        MaterialStateProperty
-                                                            .all(Colors.white),
-                                                    side: MaterialStateProperty
-                                                        .all(BorderSide(
-                                                      color: Theme.of(context)
-                                                          .colorScheme
-                                                          .primary,
-                                                    )),
-                                                  ),
-                                                  onPressed: () {
-                                                    ScaffoldMessenger.of(
-                                                            context)
-                                                        .hideCurrentSnackBar();
-
-                                                    //Scaffold.of(context).is
-                                                  },
-                                                  child: Text(
-                                                    "Cancle",
-                                                    style: TextStyle(
-                                                        color: Theme.of(context)
-                                                            .colorScheme
-                                                            .primary),
-                                                  ),
-                                                ),
-                                              ),
-                                              Container(
-                                                width: _width * 0.3,
-                                                height: _height * 0.05,
-                                                child: OutlinedButton(
-                                                  style: ButtonStyle(
-                                                    backgroundColor:
-                                                        MaterialStateProperty
-                                                            .all(Theme.of(
-                                                                    context)
-                                                                .colorScheme
-                                                                .primary),
-                                                  ),
-                                                  onPressed: () {
-                                                    ScaffoldMessenger.of(
-                                                            context)
-                                                        .hideCurrentSnackBar();
-                                                    List<ClockUser>?
-                                                        selectedOrganizationStaff =
-                                                        _selectedOrganization!
-                                                            .staff;
-
-                                                    bool _canSignIn = false;
-                                                    selectedOrganizationStaff
-                                                        ?.forEach((element) {
-                                                      if (element.id ==
-                                                          curentUser.id) {
-                                                        _canSignIn = true;
-                                                      }
-                                                      if (_canSignIn) {
-                                                        Navigator.of(context)
-                                                            .pushNamed(
-                                                          kUserConfirmSignInScreen,
-                                                          arguments:
-                                                              _selectedOrganization,
-                                                        );
-                                                      } else {
-                                                        _customWidgets.failureToste(
-                                                            text:
-                                                                "You are not registered with ${_selectedOrganization?.organizationName}",
-                                                            context: context);
-                                                      }
-                                                    });
-                                                  },
-                                                  child: Text("Logout"),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    margin: EdgeInsets.all(16.0),
-                                  ),
-                                );
-                              } else {
-                                _customWidgets.failureToste(
-                                    text:
-                                        "Staff Cannot SignIn Into ${_selectedOrganization!.organizationName}",
-                                    context: context);
-                              }
+                              otherOrganizationSignin();
                             }
                           } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                margin: EdgeInsets.all(16.0),
-                                behavior: SnackBarBehavior.floating,
-                                content: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.warning_amber_outlined,
-                                      color: Colors.orange,
-                                    ),
-                                    SizedBox(
-                                      width: 16.0,
-                                    ),
-                                    Flexible(
-                                      child: Text(
-                                          "please accept Terms and Conditions"),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
+                            _customWidgets.failureToste(
+                                text: "please accept Terms and Conditions",
+                                context: context);
                           }
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              duration: Duration(milliseconds: 2000),
-                              margin: EdgeInsets.all(16.0),
-                              behavior: SnackBarBehavior.floating,
-                              content: Row(
-                                children: [
-                                  Icon(
-                                    Icons.warning_amber_outlined,
-                                    color: Colors.orange,
-                                  ),
-                                  SizedBox(
-                                    width: 16.0,
-                                  ),
-                                  Flexible(
-                                      child:
-                                          Text("Organization cannot be empty")),
-                                ],
-                              ),
-                            ),
-                          );
+                          _customWidgets.failureToste(
+                              text: "Organization cannot be empty !",
+                              context: context);
                         }
                       },
                       child: Text(
@@ -352,6 +174,77 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
             )),
       ),
     );
+  }
+
+  void otherOrganizationSignin() {
+    ClockUser curentUser = Hive.box(kUserBox).get(kCurrentUserKey);
+
+    if (_selectedOrganization!.staffSignIn == true) {
+      _customWidgets.snacbarWithTwoButtons2(
+        titleText: "Are you sure you want to login !",
+        primatyText: "Sign Out",
+        secondaryText: "Cancle",
+        context: context,
+        primaryCallback: () {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          List<ClockUser>? selectedOrganizationStaff =
+              _selectedOrganization!.staff;
+
+          bool _canSignIn = false;
+          selectedOrganizationStaff?.forEach((element) {
+            if (element.id == curentUser.id) {
+              _canSignIn = true;
+            }
+            if (_canSignIn) {
+              Navigator.of(context).pushNamed(
+                kUserConfirmSignInScreen,
+                arguments: _selectedOrganization,
+              );
+            } else {
+              _customWidgets.failureToste(
+                  text:
+                      "You are not registered with ${_selectedOrganization?.organizationName}",
+                  context: context);
+            }
+          });
+        },
+        secondaryCallback: () =>
+            ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+      );
+    } else {
+      final String orgName = _selectedOrganization!.organizationName.toString();
+      _customWidgets.failureToste(
+          text: "Staff Cannot SignIn Into $orgName", context: context);
+    }
+  }
+
+  void currentOrganizationSignin() {
+    final String orgName = _selectedOrganization!.organizationName.toString();
+    ClockUser curentUser = Hive.box(kUserBox).get(kCurrentUserKey);
+    if (_selectedOrganization!.staffSignIn == true) {
+      List<ClockUser>? selectedOrganizationStaff = _selectedOrganization!.staff;
+
+      bool _canSignIn = false;
+      selectedOrganizationStaff?.forEach((element) {
+        if (element.id == curentUser.id) {
+          _canSignIn = true;
+        }
+        if (_canSignIn) {
+          Navigator.of(context).pushNamed(
+            kUserConfirmSignInScreen,
+            arguments: _selectedOrganization,
+          );
+        } else {
+          _customWidgets.failureToste(
+              text:
+                  "You are not registered with $orgName", context: context);
+        }
+      });
+    } else {
+      _customWidgets.failureToste(
+          text:
+              "Staff Cannot SignIn Into $orgName", context: context);
+    }
   }
 
   Future staffSelectOrganization({required Map selectedOrganization}) async {

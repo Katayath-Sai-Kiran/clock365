@@ -47,6 +47,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Color getFillColor(FocusNode focusNode) =>
       focusNode.hasFocus ? Colors.white : kStrokeColor;
+  bool _isSignLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -180,7 +181,9 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                             Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 24),
-                                child: ElevatedButton(
+                                child: _isSignLoading
+                                    ? Center(child: CircularProgressIndicator())
+                                    : ElevatedButton(
                                   onPressed: signUp,
                                   child: Text('Next'),
                                   style: ElevatedButton.styleFrom(
@@ -194,22 +197,22 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future signUp() async {
-    final UserRepository userRepository =
-        Provider.of<UserRepository>(context, listen: false);
 
     String mail = _businessEmailController.text.toString();
     String jobTitle = _jobTitleController.text.toString();
 
+    final UserRepository userRepository =
+        Provider.of<UserRepository>(context, listen: false);
     if (_mailKey.currentState!.validate() == true &&
         _confirmMailKey.currentState!.validate()) {
       if (_isTermsAndConditionChecked == true) {
         setState(() {
-          _isLoading = true;
+          _isSignLoading = true;
         });
         String? res =
             await userRepository.generateOTP(mail: mail, context: context);
         setState(() {
-          _isLoading = false;
+          _isSignLoading = false;
         });
         if (res == "done") {
           _businessEmailConfirmController.clear();
@@ -228,13 +231,16 @@ class _SignupScreenState extends State<SignupScreen> {
                 return OTPBottomSheet(mail: mail, jobTitle: jobTitle);
               });
         } else {
+      
           _businessEmailConfirmController.clear();
           _businessEmailController.clear();
         }
       } else {
+        
         _customWidgets.failureToste(
             text: "Please accept terms and conditions", context: context);
       }
     }
+       
   }
 }

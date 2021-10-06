@@ -4,12 +4,11 @@ import 'package:clock365/constants.dart';
 import 'package:clock365/customWidgets.dart';
 import 'package:clock365/models/OrganizationModel.dart';
 import 'package:clock365/models/clock_user.dart';
-import 'package:clock365/repository/userRepository.dart';
+import 'package:clock365/providers/user_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
 
 class OrganizationRepository extends ChangeNotifier {
   final CustomWidgets _customWidgets = CustomWidgets();
@@ -42,48 +41,6 @@ class OrganizationRepository extends ChangeNotifier {
     Map result = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
-      final String userId = Hive.box(kUserBox).get(kcurrentUserId);
-
-      Map userData = Hive.box(kUserBox).get(userId);
-
-      ClockUser currentUser = userData["currentUser"];
-
-      List? currentUserOrganizations = currentUser.organizations;
-
-      List updatedCurrentOrgs = [];
-
-      Map currentOfflineOrganization =
-          Hive.box(kUserBox).get(userId)["currentOrganization"];
-
-      List currentOfflineOrganizationStaff =
-          currentOfflineOrganization["staff"] ?? [];
-
-      currentUserOrganizations!.asMap().forEach(
-        (key, organization) {
-          if (organization["_id"]["\$oid"] == organizationId) {
-            List currentStaff = organization["staff"];
-
-            organization["staff"] = [user, ...currentStaff];
-
-            currentOfflineOrganizationStaff.add([user, ...currentStaff]);
-
-            updatedCurrentOrgs.add(organization);
-          } else {
-            updatedCurrentOrgs.add(organization);
-          }
-        },
-      );
-      currentOfflineOrganization.update(
-          "staff", (value) => currentOfflineOrganizationStaff);
-
-      // currentUser.organizations = updatedCurrentOrgs;
-
-      userData.update("currentUser", (value) => currentUser);
-
-      userData.update(
-          "currentOrganization", (value) => currentOfflineOrganization);
-
-      await Hive.box(kUserBox).put(userId, userData);
       _customWidgets.successToste(text: result["msg"], context: context);
     } else {
       _customWidgets.failureToste(text: result["msg"], context: context);
@@ -102,57 +59,7 @@ class OrganizationRepository extends ChangeNotifier {
     Map result = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          duration: Duration(milliseconds: 2000),
-          backgroundColor: Colors.black,
-          content: Text(result["msg"]),
-        ),
-      );
-
-      final String userId = Hive.box(kUserBox).get(kcurrentUserId);
-      Map currentOfflineUserData = Hive.box(kUserBox).get(userId);
-      ClockUser currentOfflineUser = currentOfflineUserData["currentUser"];
-      List? currentUserOrganizations = currentOfflineUser.organizations;
-
-      List updatedCurrentOrgs = [];
-
-      Map currentOfflineOrganization =
-          Hive.box(kUserBox).get(userId)["currentOrganization"];
-
-      List currentOfflineOrganizationStaff =
-          currentOfflineOrganization["staff"] ?? [];
-
-      currentUserOrganizations!.asMap().forEach(
-        (key, organization) {
-          if (organization["_id"]["\$oid"] == organizationId) {
-            List<ClockUser> currentOfflineStaff = organization["staff"];
-
-            currentOfflineStaff.removeWhere(
-                (currentOfflineUser) => currentOfflineUser.id == user.id);
-
-            organization["staff"] = [...currentOfflineStaff];
-
-            currentOfflineOrganizationStaff.add([...currentOfflineStaff]);
-
-            updatedCurrentOrgs.add(organization);
-          } else {
-            updatedCurrentOrgs.add(organization);
-          }
-        },
-      );
-      currentOfflineOrganization.update(
-          "staff", (value) => currentOfflineOrganizationStaff);
-
-      // currentOfflineUser.organizations = updatedCurrentOrgs;
-
-      currentOfflineUserData.update(
-          "currentUser", (value) => currentOfflineUser);
-
-      currentOfflineUserData.update(
-          "currentOrganization", (value) => currentOfflineOrganization);
-
-      await Hive.box(kUserBox).put(userId, currentOfflineUserData);
+      _customWidgets.successToste(text: result["msg"], context: context);
     } else {
       _customWidgets.failureToste(text: result["msg"], context: context);
     }
@@ -161,8 +68,8 @@ class OrganizationRepository extends ChangeNotifier {
   Future registerOrganization({
     required Map data,
     required BuildContext context,
+    required ClockUserProvider clockUserProvider,
   }) async {
-    final UserRepository userRepository = Provider.of(context, listen: false);
     try {
       final Uri uri = Uri.parse(kUserOrganizationResisterEndpoint);
 
@@ -172,30 +79,7 @@ class OrganizationRepository extends ChangeNotifier {
           await http.post(uri, headers: headers, body: encodedData);
 
       if (response.statusCode == 201) {
-        //request successful
-        //cache the user data
-        Map<String, dynamic> organizationData = jsonDecode(response.body);
-
-        List newOrgStaff = organizationData["staff"];
-
-        List<ClockUser> parsedStaff =
-            newOrgStaff.map((staff) => ClockUser.fromJson(staff)).toList();
-
-        organizationData["staff"] = parsedStaff;
-        OrganizationModel organizationModel =
-            OrganizationModel.fromJson(organizationData);
-
-        userRepository.updateCurrentCacheOrganizations(
-            newOrganization: organizationModel);
-
-        ClockUser user = Hive.box(kUserBox).get(kCurrentUserKey);
-
-        List<OrganizationModel>? previousOrganizations =
-            user.organizations ?? [];
-
-        user.organizations = [organizationModel, ...previousOrganizations];
-        await Hive.box(kUserBox).put(kCurrentUserKey, user);
-
+        //request successfully
         _customWidgets.successToste(
             text: "Organization successfully registered", context: context);
       } else {
@@ -208,7 +92,7 @@ class OrganizationRepository extends ChangeNotifier {
   }
 
   Future<List<OrganizationModel>> getOrganizationSuggetions(
-      {required String pattern}) async {
+      {required String pattern, required BuildContext context}) async {
     try {
       final String getOrgsUrl = "$kBaseUrl/api/v1/org/$pattern/suggestions";
       http.Response response = await http.get(Uri.parse(getOrgsUrl));
@@ -243,14 +127,15 @@ class OrganizationRepository extends ChangeNotifier {
       }
       return parsedOrganizations;
     } catch (error) {
-      print(error);
+      _customWidgets.failureToste(text: error.toString(), context: context);
       return [];
     }
   }
 
   Future addExistingOrganization(
-      {required Map data, required BuildContext context}) async {
-    final UserRepository userRepository = Provider.of(context, listen: false);
+      {required Map data,
+      required BuildContext context,
+      required ClockUserProvider clockUserProvider}) async {
     try {
       final Uri uri = Uri.parse(kUserExistingOrganizationEndpoint);
 
@@ -260,41 +145,15 @@ class OrganizationRepository extends ChangeNotifier {
           await http.put(uri, headers: headers, body: encodedData);
 
       if (response.statusCode == 200) {
-        //request successful
         //cache the user data
-        Map<String, dynamic> organizationData = jsonDecode(response.body);
-
-        List newOrgStaff = organizationData["staff"];
-
-        List<ClockUser> parsedStaff =
-            newOrgStaff.map((staff) => ClockUser.fromJson(staff)).toList();
-
-        organizationData["staff"] = parsedStaff;
-        OrganizationModel organizationModel =
-            OrganizationModel.fromJson(organizationData);
-
-        userRepository.updateCurrentCacheOrganizations(
-            newOrganization: organizationModel);
-
-        ClockUser user = Hive.box(kUserBox).get(kCurrentUserKey);
-
-        List<OrganizationModel>? previousOrganizations =
-            user.organizations ?? [];
-
-        user.organizations = [organizationModel, ...previousOrganizations];
-        await Hive.box(kUserBox).put(kCurrentUserKey, user);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("organization successfully added"),
-          ),
-        );
+        _customWidgets.successToste(
+            text: "Organizations Successfully added", context: context);
       } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(response.body)));
+        Map message = jsonDecode(response.body);
+        _customWidgets.failureToste(text: message["msg"], context: context);
       }
-    } catch (e) {
-      print(e.toString());
+    } catch (error) {
+      _customWidgets.failureToste(text: error.toString(), context: context);
     }
   }
 
@@ -417,5 +276,17 @@ class OrganizationRepository extends ChangeNotifier {
       _customWidgets.failureToste(text: error.toString(), context: context);
       return scannedOrganization;
     }
+  }
+
+  Future getStaffAttendenceDetails({required BuildContext context}) async {
+    try {
+      http.Response response =
+          await http.get(Uri.parse(kGetAttendenceDetailsEndPoint));
+      if (response.statusCode == 200) {
+      } else {
+        Map message = jsonDecode(response.body);
+        _customWidgets.failureToste(text: message["msg"], context: context);
+      }
+    } catch (error) {}
   }
 }

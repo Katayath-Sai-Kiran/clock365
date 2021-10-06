@@ -1,11 +1,7 @@
 import 'package:clock365/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 
-import 'package:clock365/constants.dart';
-import 'package:clock365/models/clock_user.dart';
-import 'package:clock365/repository/organization_repository.dart';
 import 'package:get/get.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:clock365/models/OrganizationModel.dart';
 
@@ -16,7 +12,6 @@ class OrganizationDetails extends StatelessWidget {
   Widget build(BuildContext context) {
     final ClockUserProvider organizationRepository =
         Provider.of<ClockUserProvider>(context, listen: false);
-    final ClockUser currentUser = Hive.box(kUserBox).get(kCurrentUserKey);
 
     //organizationRepository.getCurrentUserSites();
 

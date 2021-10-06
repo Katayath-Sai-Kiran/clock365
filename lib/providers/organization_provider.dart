@@ -11,10 +11,16 @@ import 'package:http/http.dart' as http;
 class OrganizationProvider extends ChangeNotifier {
   final CustomWidgets _customWidgets = CustomWidgets();
   OrganizationModel? currentOrganization;
-  List<ClockUser> currentOrganizationStaff = [];
+  List<ClockUser> currentOrganizationSignedInStaff = [];
   List<ClockUser> currentOrganizationVisitors = [];
   bool areStaffLoading = false;
   bool areVisitorsLoading = false;
+  bool isOrganizationDetailsLoading = false;
+
+  void updateOrganizationLoadingStatus({required bool updatedState}) {
+    isOrganizationDetailsLoading = updatedState;
+    notifyListeners();
+  }
 
   Future getCurrentorganization({required BuildContext context}) async {
     try {
@@ -24,9 +30,32 @@ class OrganizationProvider extends ChangeNotifier {
     }
   }
 
-  Future getCurrentOrganizationStaff(
-      {required String orgId, required BuildContext context}) async {
-    try {} catch (error) {}
+  Future getCurrentOrganizationStaff({required BuildContext context}) async {
+    List<ClockUser> staff = [];
+    final ClockUser currentUser = await Hive.box(kUserBox).get(kCurrentUserKey);
+    try {
+      http.Response response = await http.get(Uri.parse(
+          kGetStaffEndpoint.replaceFirst("org_id",
+              currentUser.currentOrganization!.organizationId.toString())));
+      if (response.statusCode == 200) {
+        List responseList = jsonDecode(response.body);
+        staff = responseList
+            .map((e) => ClockUser.fromJson(e as Map<String, dynamic>))
+            .toList();
+
+        currentOrganizationSignedInStaff = staff;
+      } else {
+        Map message = jsonDecode(response.body);
+        currentOrganizationSignedInStaff = [];
+        _customWidgets.failureToste(text: message["msg"], context: context);
+      }
+      notifyListeners();
+    } catch (error) {
+      currentOrganizationSignedInStaff = [];
+      notifyListeners();
+
+      _customWidgets.failureToste(text: error.toString(), context: context);
+    }
   }
 
   Future getCurrentOrganizationSignedInStaff({
@@ -43,13 +72,13 @@ class OrganizationProvider extends ChangeNotifier {
       http.Response response = await http.get(url);
       if (response.statusCode == 200) {
         List responseList = jsonDecode(response.body);
-        currentOrganizationStaff = responseList
+        currentOrganizationSignedInStaff = responseList
             .map((e) => ClockUser.fromJson(e as Map<String, dynamic>))
             .toList();
       } else {
         Map message = jsonDecode(response.body);
         _customWidgets.failureToste(text: message["msg"], context: context);
-        currentOrganizationStaff = [];
+        currentOrganizationSignedInStaff = [];
       }
       notifyListeners();
     } catch (error) {
@@ -71,7 +100,6 @@ class OrganizationProvider extends ChangeNotifier {
         currentOrganizationVisitors = responseList
             .map((e) => ClockUser.fromJson(e as Map<String, dynamic>))
             .toList();
-       
       } else {
         currentOrganizationVisitors = [];
         Map message = jsonDecode(response.body);
@@ -79,7 +107,6 @@ class OrganizationProvider extends ChangeNotifier {
       }
     } catch (error) {
       currentOrganizationVisitors = [];
-
 
       _customWidgets.failureToste(text: error.toString(), context: context);
     }
