@@ -14,6 +14,7 @@ import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
+
 class VisitorSignInDetailsScreen extends StatefulWidget {
   const VisitorSignInDetailsScreen({Key? key}) : super(key: key);
 
@@ -184,13 +185,15 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
   }
 
   void otherOrganzationSignin() {
+        ClockUser curentUser = Hive.box(kUserBox).get(kCurrentUserKey);
+
     if (_selectedOrganization!.visitorSignIn == true) {
-      _customWidgets.snacbarWithTwoButtons2(
+      _customWidgets.snacbarWithTwoButtons3(
+          currentUser: curentUser,
+          selectedOrganization: _selectedOrganization,
+
           context: context,
-          primaryCallback: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            Navigator.of(context).pushNamed(kVisitorSignInDetailsScreen);
-          },
+        
           secondaryCallback: () =>
               ScaffoldMessenger.of(context).hideCurrentSnackBar(),
           primatyText: "Logout",
@@ -205,6 +208,7 @@ class _UserSignInScreenState extends State<VisitorSignInDetailsScreen> {
   }
 
   void currentOrganizationSignin() {
+
     final String orgName = _selectedOrganization!.organizationName.toString();
     if (_selectedOrganization!.visitorSignIn == true) {
       //visitor has permission to login

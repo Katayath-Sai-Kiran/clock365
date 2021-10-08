@@ -23,11 +23,11 @@ class StaffDetails extends StatelessWidget {
               width: Get.width,
               child: ListView.builder(
                 itemCount:
-              organizationRepository.currentOrganizationSignedInStaff.length,
+              organizationRepository.currentOrganizationStaff.length,
                 itemBuilder: (_, int index) {
                   return StaffItem(
                 user: organizationRepository
-                    .currentOrganizationSignedInStaff[index]);
+                    .currentOrganizationStaff[index]);
                 },
               ),
       ),

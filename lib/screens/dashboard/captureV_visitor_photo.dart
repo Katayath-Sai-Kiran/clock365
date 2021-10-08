@@ -22,6 +22,7 @@ class _CaptureVisitorPhotoState extends State<CaptureVisitorPhoto> {
   final ImagePicker _imagePicker = ImagePicker();
 
   File? _capturedImage;
+  bool _isSigningIn = false;
 
   @override
   Widget build(BuildContext context) {
@@ -92,46 +93,60 @@ class _CaptureVisitorPhotoState extends State<CaptureVisitorPhoto> {
                     ),
                     Container(
                         alignment: Alignment.bottomCenter,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            if (_capturedImage == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  behavior: SnackBarBehavior.floating,
-                                  margin: EdgeInsets.all(16.0),
-                                  content: Row(
-                                    children: [
-                                      Icon(Icons.warning_amber_outlined,
-                                          color: Colors.orange),
-                                      SizedBox(
-                                        width: 16.0,
+                        child: _isSigningIn
+                            ? Center(
+                                child: CircularProgressIndicator(),
+                              )
+                            : ElevatedButton(
+                                onPressed: () async {
+                                  if (_capturedImage == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        behavior: SnackBarBehavior.floating,
+                                        margin: EdgeInsets.all(16.0),
+                                        content: Row(
+                                          children: [
+                                            Icon(Icons.warning_amber_outlined,
+                                                color: Colors.orange),
+                                            SizedBox(
+                                              width: 16.0,
+                                            ),
+                                            Flexible(
+                                              child: Text(
+                                                  "Please select an image"),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      Flexible(
-                                        child: Text("Please select an image"),
-                                      ),
-                                    ],
-                                  ),
+                                    );
+                                  } else {
+                                    setState(() {
+                                      _isSigningIn = true;
+                                    });
+                                    userRepository.manualSignInUser(
+                                      context: context,
+                                      organizationName: widget
+                                          .selectedOrganization!
+                                          .organizationName!,
+                                      profileImage: _capturedImage!,
+                                      signInType: 2,
+                                      userId: currentUser.id!,
+                                    );
+                                    setState(() {
+                                      _isSigningIn = false;
+                                    });
+                                  }
+                                },
+                                child: Text(
+                                  S.of(context).confirmSignIn,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .button
+                                      ?.copyWith(
+                                          color: Theme.of(context)
+                                              .scaffoldBackgroundColor),
                                 ),
-                              );
-                            } else {
-                              print("signing visitor with signtype 2");
-                              userRepository.manualSignInUser(
-                                context: context,
-                                organizationName: widget
-                                    .selectedOrganization!.organizationName!,
-                                profileImage: _capturedImage!,
-                                signInType: 2,
-                                userId: currentUser.id!,
-                              );
-                            }
-                          },
-                          child: Text(
-                            S.of(context).confirmSignIn,
-                            style: Theme.of(context).textTheme.button?.copyWith(
-                                color:
-                                    Theme.of(context).scaffoldBackgroundColor),
-                          ),
-                        ))
+                              ))
                   ],
                 ))));
   }

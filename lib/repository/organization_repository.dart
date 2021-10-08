@@ -33,17 +33,25 @@ class OrganizationRepository extends ChangeNotifier {
     required String organizationId,
     required BuildContext context,
   }) async {
-    final Uri uri = Uri.parse(kAddnNewStaffEndPoint);
-    String body = jsonEncode({"org_id": organizationId, "user_id": user.id});
+    try {
+      print("received clock user id is ${user.id}");
+      final Uri uri = Uri.parse(kAddnNewStaffEndPoint);
+      String body = jsonEncode({"org_id": organizationId, "user_id": user.id});
 
-    http.Response response = await http.put(uri, headers: headers, body: body);
+      http.Response response =
+          await http.put(uri, headers: headers, body: body);
 
-    Map result = jsonDecode(response.body);
-
-    if (response.statusCode == 200) {
-      _customWidgets.successToste(text: result["msg"], context: context);
-    } else {
-      _customWidgets.failureToste(text: result["msg"], context: context);
+      if (response.statusCode == 200) {
+        _customWidgets.successToste(
+            text: "staff updated successfully updated", context: context);
+        return "done";
+      } else {
+        print(response.body);
+        _customWidgets.failureToste(
+            text: "something went wrong", context: context);
+      }
+    } catch (error) {
+      print(error);
     }
   }
 
@@ -52,16 +60,24 @@ class OrganizationRepository extends ChangeNotifier {
     required String organizationId,
     required BuildContext context,
   }) async {
-    final Uri uri = Uri.parse(kAddnNewStaffEndPoint);
-    String body = jsonEncode({"org_id": organizationId, "user_id": user.id});
+    try {
+      final Uri uri = Uri.parse(kRemoveStaffEndPoint);
+      String body = jsonEncode({"org_id": organizationId, "user_id": user.id});
 
-    http.Response response = await http.put(uri, headers: headers, body: body);
-    Map result = jsonDecode(response.body);
+      http.Response response =
+          await http.put(uri, headers: headers, body: body);
 
-    if (response.statusCode == 200) {
-      _customWidgets.successToste(text: result["msg"], context: context);
-    } else {
-      _customWidgets.failureToste(text: result["msg"], context: context);
+      if (response.statusCode == 200) {
+        print(response.body);
+        _customWidgets.successToste(
+            text: "staff updated successfully updated", context: context);
+        return "done";
+      } else {
+        _customWidgets.failureToste(
+            text: "Something went wrong", context: context);
+      }
+    } catch (error) {
+      print(error);
     }
   }
 
@@ -122,6 +138,8 @@ class OrganizationRepository extends ChangeNotifier {
           organization["staff"] = staff;
           organization["staff_signed_in"] = staffSignedIn;
           organization["visitors_signed_in"] = visitorSignedId;
+          organization["staff_sign_in"] = organization["staff_sign_in"];
+          organization["visitor_sign_in"] = organization["visitor_sign_in"];
           parsedOrganizations.add(OrganizationModel.fromJson(organization));
         });
       }
@@ -179,13 +197,16 @@ class OrganizationRepository extends ChangeNotifier {
   }
 
   Future<List<ClockUser>?> getCurrentOrganizationsignedVisitors(
-      {required final String organizationId,
-      required final BuildContext context}) async {
+      {required final BuildContext context}) async {
     List<ClockUser> staff = [];
+    final ClockUser clockUser = Hive.box(kUserBox).get(kCurrentUserKey);
+    final String orgName =
+        clockUser.currentOrganization!.organizationId.toString();
     try {
       http.Response response = await http.get(Uri.parse(
-          kGetVisitorSignedInEndpoint.replaceFirst("org_id", organizationId)));
+          kGetVisitorSignedInEndpoint.replaceFirst("org_id", orgName)));
       if (response.statusCode == 200) {
+        print("response from visitors ${response.body}");
         List responseList = jsonDecode(response.body);
         staff = responseList
             .map((e) => ClockUser.fromJson(e as Map<String, dynamic>))
@@ -227,7 +248,7 @@ class OrganizationRepository extends ChangeNotifier {
     List<OrganizationModel> organizations = [];
     try {
       http.Response response = await http.get(
-          Uri.parse(kGetCurrentOrganizations.replaceFirst("user_id", userId)));
+          Uri.parse(kGetCurrentSitesEndPoint.replaceFirst("user_id", userId)));
       if (response.statusCode == 200) {
         List responseList = jsonDecode(response.body) ?? [];
 

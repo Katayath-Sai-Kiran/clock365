@@ -10,6 +10,8 @@ import 'package:clock365/route_generator.dart';
 import 'package:clock365/screens/dashboard/user_dashboard.dart';
 import 'package:clock365/screens/login/login_screen.dart';
 import 'package:clock365/screens/main/main_screen.dart';
+import 'package:clock365/screens/profile/staff_profile.dart';
+
 import 'package:clock365/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -115,7 +117,7 @@ class _Clock365AppState extends State<Clock365App> {
                 ? IntroLogo()
                 : _isLoggedIn == true
                     ? signInType == 1
-                        ? UserDashboard()
+                        ? StaffProfile()
                         : signInType == 2
                             ? UserDashboard()
                             : MainScreen()

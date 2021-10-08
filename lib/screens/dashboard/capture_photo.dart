@@ -11,7 +11,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:clock365/models/OrganizationModel.dart';
 
-
 class CapturePhotoScreen extends StatefulWidget {
   const CapturePhotoScreen({Key? key}) : super(key: key);
 
@@ -22,6 +21,7 @@ class CapturePhotoScreen extends StatefulWidget {
 class _CapturePhotoScreenState extends State<CapturePhotoScreen> {
   final ImagePicker _imagePicker = ImagePicker();
   File? _capturedImage;
+  bool _isSigningIn = false;
   @override
   Widget build(BuildContext context) {
     final OrganizationModel selectedOrganization =
@@ -93,7 +93,9 @@ class _CapturePhotoScreenState extends State<CapturePhotoScreen> {
                     ),
                     Container(
                         alignment: Alignment.bottomCenter,
-                        child: ElevatedButton(
+                        child: _isSigningIn
+                            ? Center(child: CircularProgressIndicator())
+                            : ElevatedButton(
                           onPressed: () async {
                             if (_capturedImage == null) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -115,6 +117,9 @@ class _CapturePhotoScreenState extends State<CapturePhotoScreen> {
                                 ),
                               );
                             } else {
+                              setState(() {
+                                      _isSigningIn = true;
+                                    });
                               userRepository.manualSignInUser(
                                 context: context,
                                 organizationName:
@@ -123,6 +128,9 @@ class _CapturePhotoScreenState extends State<CapturePhotoScreen> {
                                 signInType: 1,
                                 userId: currentUser.id!,
                               );
+                              setState(() {
+                                      _isSigningIn = false;
+                                    });
                             }
                           },
                           child: Text(

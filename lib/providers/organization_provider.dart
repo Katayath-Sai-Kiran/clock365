@@ -12,7 +12,8 @@ class OrganizationProvider extends ChangeNotifier {
   final CustomWidgets _customWidgets = CustomWidgets();
   OrganizationModel? currentOrganization;
   List<ClockUser> currentOrganizationSignedInStaff = [];
-  List<ClockUser> currentOrganizationVisitors = [];
+  List<ClockUser> currentOrganizationSignedInVisitors = [];
+  List<ClockUser> currentOrganizationStaff = [];
   bool areStaffLoading = false;
   bool areVisitorsLoading = false;
   bool isOrganizationDetailsLoading = false;
@@ -43,15 +44,15 @@ class OrganizationProvider extends ChangeNotifier {
             .map((e) => ClockUser.fromJson(e as Map<String, dynamic>))
             .toList();
 
-        currentOrganizationSignedInStaff = staff;
+        currentOrganizationStaff = staff;
       } else {
         Map message = jsonDecode(response.body);
-        currentOrganizationSignedInStaff = [];
+        currentOrganizationStaff = [];
         _customWidgets.failureToste(text: message["msg"], context: context);
       }
       notifyListeners();
     } catch (error) {
-      currentOrganizationSignedInStaff = [];
+      currentOrganizationStaff = [];
       notifyListeners();
 
       _customWidgets.failureToste(text: error.toString(), context: context);
@@ -61,6 +62,7 @@ class OrganizationProvider extends ChangeNotifier {
   Future getCurrentOrganizationSignedInStaff({
     required BuildContext context,
   }) async {
+    print("called when loading");
     final ClockUser clockUser = Hive.box(kUserBox).get(kCurrentUserKey);
     final OrganizationModel? currentOrganization =
         clockUser.currentOrganization;
@@ -91,22 +93,24 @@ class OrganizationProvider extends ChangeNotifier {
     final ClockUser clockUser = Hive.box(kUserBox).get(kCurrentUserKey);
     final OrganizationModel? currentOrganization =
         clockUser.currentOrganization;
+
     final Uri url = Uri.parse(kGetVisitorSignedInEndpoint.replaceFirst(
-        "org_id", currentOrganization!.organizationName.toString()));
+        "org_id", currentOrganization!.organizationId.toString()));
     try {
       http.Response response = await http.get(url);
       if (response.statusCode == 200) {
         List responseList = jsonDecode(response.body);
-        currentOrganizationVisitors = responseList
+        print(responseList);
+        currentOrganizationSignedInVisitors = responseList
             .map((e) => ClockUser.fromJson(e as Map<String, dynamic>))
             .toList();
       } else {
-        currentOrganizationVisitors = [];
+        currentOrganizationSignedInVisitors = [];
         Map message = jsonDecode(response.body);
         _customWidgets.failureToste(text: message["msg"], context: context);
       }
     } catch (error) {
-      currentOrganizationVisitors = [];
+      currentOrganizationSignedInVisitors = [];
 
       _customWidgets.failureToste(text: error.toString(), context: context);
     }

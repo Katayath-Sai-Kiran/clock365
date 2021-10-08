@@ -19,6 +19,7 @@ class EditStaffScreen extends StatefulWidget {
 }
 
 class _EditStaffScreenState extends State<EditStaffScreen> {
+  final TextEditingController _staffNameController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     final OrganizationModel curretnOrganization =
@@ -28,8 +29,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
     final double _height = MediaQuery.of(context).size.height;
     final ThemeData themeData = Theme.of(context);
 
-    final OrganizationRepository organizationRepository =
-        Provider.of(context, listen: false);
+ 
     final UserRepository userRepository =
         Provider.of<UserRepository>(context, listen: false);
 
@@ -57,6 +57,9 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                     height: 16,
                   ),
                   TypeAheadField(
+                    textFieldConfiguration: TextFieldConfiguration(
+                      controller: _staffNameController,
+                    ),
                     suggestionsCallback: (pattern) async {
                       List<ClockUser> staff =
                           await userRepository.getMatches(pattern: pattern) ??
@@ -71,7 +74,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                       if (staff.length == 0) {
                         return <ClockUser>[
                           ClockUser(
-                            name: pattern.toString(),
+                            name: "No Staff Found",
                           ),
                         ];
                       } else {
@@ -80,6 +83,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                     },
                     itemBuilder: (BuildContext context, ClockUser clockUser) {
                       return MemberItem(
+                        controller: _staffNameController,
                         clockUser: clockUser,
                         isAdd: true,
                         index: 0,
@@ -87,16 +91,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                         curretnOrganization: curretnOrganization,
                       );
                     },
-                    onSuggestionSelected: (ClockUser clockUser) async {
-                      organizationRepository.addStaffToOrganization(
-                        user: clockUser,
-                        organizationId: orgId,
-                        context: context,
-                      );
-                      
-
-                      provider.addStaff(newStaffMember: clockUser);
-                    },
+                    onSuggestionSelected: (ClockUser clockUser) {},
                   ),
                   SizedBox(
                     height: 32,
@@ -115,6 +110,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                     shrinkWrap: true,
                     physics: NeverScrollableScrollPhysics(),
                     itemBuilder: (context, index) => MemberItem(
+                      controller: _staffNameController,
                       curretnOrganization: curretnOrganization,
                       clockUser: staff[index],
                       isAdd: false,
@@ -149,12 +145,14 @@ class MemberItem extends StatefulWidget {
   final int index;
   final String orgId;
   final OrganizationModel curretnOrganization;
+  final TextEditingController controller;
   const MemberItem({
     Key? key,
     required this.clockUser,
     required this.curretnOrganization,
     required this.isAdd,
     required this.index,
+    required this.controller,
     required this.orgId,
   }) : super(key: key);
 
@@ -169,47 +167,69 @@ class _MemberItemState extends State<MemberItem> {
     OrganizationRepository organizationRepository =
         Provider.of<OrganizationRepository>(context, listen: false);
 
-    return Container(
-      margin: widget.isAdd ? EdgeInsets.zero : EdgeInsets.only(top: 8),
-      padding: EdgeInsets.only(left: 16),
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(widget.isAdd ? 0 : 8),
-          border: Border.all(
-            width: widget.isAdd ? 0 : 1,
-            color: kStrokeColor,
-          )),
-      child: Row(
-        children: [
-          Expanded(
-              child: Text(
-            widget.clockUser.name ?? '',
-            style: Theme.of(context).textTheme.bodyText1,
-          )),
-          SizedBox(
-            width: 16,
-          ),
-          IconButton(
-            onPressed: () {
-              if (!widget.isAdd) {
-                organizationRepository.removeStaffFromOrganization(
-                  user: widget.clockUser,
-                  organizationId: widget.orgId,
-                  context: context,
-                );
-
-
-                provider.deleteStaff(staffIndex: widget.index);
-              }
-            },
-            icon: SizedBox(
-              height: 24,
-              width: 24,
-              child: SvgPicture.asset(!widget.isAdd
-                  ? 'assets/remove_user.svg'
-                  : 'assets/add_user.svg'),
+    return InkWell(
+      onTap: () async {
+        if (widget.clockUser.name!.toString().contains("No Staff Found")) {
+          widget.controller.clear();
+        } else {
+          widget.controller.clear();
+          String response = await organizationRepository.addStaffToOrganization(
+            user: widget.clockUser,
+            organizationId:
+                widget.curretnOrganization.organizationId.toString(),
+            context: context,
+          );
+          if (response == "done") {
+            provider.addStaff(newStaffMember: widget.clockUser);
+            widget.controller.clear();
+          } else {
+            widget.controller.clear();
+          }
+        }
+      },
+      child: Container(
+        margin: widget.isAdd ? EdgeInsets.zero : EdgeInsets.only(top: 8),
+        padding: EdgeInsets.only(left: 16),
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(widget.isAdd ? 0 : 8),
+            border: Border.all(
+              width: widget.isAdd ? 0 : 1,
+              color: kStrokeColor,
+            )),
+        child: Row(
+          children: [
+            Expanded(
+                child: Text(
+              widget.clockUser.name ?? '',
+              style: Theme.of(context).textTheme.bodyText1,
+            )),
+            SizedBox(
+              width: 16,
             ),
-          )
-        ],
+            IconButton(
+              onPressed: () async {
+                if (!widget.isAdd) {
+                  String? response =
+                      await organizationRepository.removeStaffFromOrganization(
+                    user: widget.clockUser,
+                    organizationId: widget.orgId,
+                    context: context,
+                  );
+                  if (response == "done") {
+                    provider.deleteStaff(staffIndex: widget.index);
+                  }
+                }
+              },
+              icon: SizedBox(
+                height: 24,
+                width: 24,
+                child: SvgPicture.asset(!widget.isAdd
+                    ? 'assets/remove_user.svg'
+                    : 'assets/add_user.svg'),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,5 @@
 // Hive types
 
-
 import 'package:clock365/models/clock_user.dart';
 import 'package:clock365/models/destination.dart';
 import 'package:clock365/screens/dashboard/dashboard_screen.dart';
@@ -90,34 +89,55 @@ final allColors = <Color>[
 ];
 
 //API endPoints
-const String kGenerateOTPEndpoint = "$kBaseUrl/api/v1/send/code/verification";
-const String kVerifyGmailEndPoint = "$kBaseUrl/api/v1/verify/code";
-const String kUserSignUpEndPoint = "$kBaseUrl/api/v1/signup";
-const String kUserLoginEndPont = "$kBaseUrl/api/v1/login";
+const String kGenerateOTPEndpoint =
+    "$kBaseUrl/api/v1/send/code/verification"; // send otp
 
-const String kUserOrganizationResisterEndpoint = "$kBaseUrl/api/v1/org";
+const String kResetOTPEndpoint =
+    "$kBaseUrl/api/v1/send/code/reset"; // send otp in reset password screen
+
+const String kVerifyGmailEndPoint =
+    "$kBaseUrl/api/v1/verify/code"; // verify opt
+
+const String kUserSignUpEndPoint = "$kBaseUrl/api/v1/signup"; //sign up user
+
+const String kUserLoginEndPont = "$kBaseUrl/api/v1/login"; //login user
+
+const String kUserOrganizationResisterEndpoint =
+    "$kBaseUrl/api/v1/org"; //register new organization
+
 const String kUserExistingOrganizationEndpoint =
-    "$kBaseUrl/api/v1/user/add/org";
+    "$kBaseUrl/api/v1/user/add/org"; //add existing org to user
 
-const String kAddnNewStaffEndPoint = "$kBaseUrl/api/v1/org/new/staff";
-const String kRemoveStaffEndPoint = "$kBaseUrl/api/v1/org/remove/staff";
+const String kAddnNewStaffEndPoint =
+    "$kBaseUrl/api/v1/org/new/staff"; // add staff to organization
 
-const String kstaffSignInEndPoint = "$kBaseUrl/api/v1/org/signin";
-const String kGetCurrentSitesEndPoint = "$kBaseUrl/api/v1/user/user_id/orgs";
+const String kRemoveStaffEndPoint =
+    "$kBaseUrl/api/v1/org/remove/staff"; //remove staff from org
 
-const String kGetStaffEndpoint = "$kBaseUrl/api/v1/org/org_id/staff";
+const String kstaffSignInEndPoint =
+    "$kBaseUrl/api/v1/org/signin"; //staff and visitor sign into org from dashbord
+
+const String kGetCurrentSitesEndPoint =
+    "$kBaseUrl/api/v1/user/user_id/orgs"; //get current user registerd organizations
+
+const String kGetStaffEndpoint =
+    "$kBaseUrl/api/v1/org/org_id/staff"; //get current organization staff
 const String kGetStaffSignedInEndpoint =
-    "$kBaseUrl/api/v1/org/org_id/staff/active";
+    "$kBaseUrl/api/v1/org/org_id/staff/active"; //get current organization signed in staff
 
 const String kGetVisitorSignedInEndpoint =
-    "$kBaseUrl/api/v1/org/org_id/visitors/active";
+    "$kBaseUrl/api/v1/org/org_id/visitors/active"; //get current organization signed in visitors
 
-const String kGetCurrentOrganizations = "$kBaseUrl/api/v1/user/user_id/orgs";
+const String kUpdateOrganizationData =
+    "$kBaseUrl/api/v1/org"; //update organization data like staffsign instatus
 
-const String kUpdateOrganizationData = "$kBaseUrl/api/v1/org";
-const String kGetScannedOrgDetailsEndPoint = "$kBaseUrl/api/v1/org/org_id";
-const String kGetAttendenceDetailsEndPoint = "$kBaseUrl/api/v1/org/";
+const String kGetScannedOrgDetailsEndPoint =
+    "$kBaseUrl/api/v1/org/org_id"; //touch less sign response organizations
 
+const String kResetUserPasswordEndpoint =
+    "$kBaseUrl/api/v1/user/update/password"; // reset passsword of registered mail
 
+const String kGetAttendenceDetailsEndPoint =
+    "$kBaseUrl/api/v1/user/user_id/status?org_id=org_value"; //attendence details list
 
 //userBox keys

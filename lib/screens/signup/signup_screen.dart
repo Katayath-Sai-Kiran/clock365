@@ -110,16 +110,12 @@ class _SignupScreenState extends State<SignupScreen> {
                               onFieldSubmitted: (val) {
                                 _confirmMailKey.currentState!.validate();
                               },
-                              validator: (val) {
-                                if (val?.isEmpty == true ||
-                                    val?.contains("@") == false) {
-                                  if (val != _businessEmailController.text) {
-                                    _businessEmailConfirmController.clear();
-                                    return "organigation mail and confirmation mail are not equal";
-                                  }
-                                }
-                                return null;
-                              },
+                              validator: (val) => val !=
+                                      _businessEmailController.text.toString()
+                                  ? "Emails do not match"
+                                  : null,
+                          
+                              
                               key: _confirmMailKey,
                               textInputAction: TextInputAction.next,
                               controller: _businessEmailConfirmController,
@@ -228,12 +224,18 @@ class _SignupScreenState extends State<SignupScreen> {
                       topLeft: Radius.circular(24),
                       topRight: Radius.circular(24))),
               builder: (context) {
-                return OTPBottomSheet(mail: mail, jobTitle: jobTitle);
+                return OTPBottomSheet(
+                  mail: mail,
+                  jobTitle: jobTitle,
+                  type: 1,
+                );
               });
         } else {
       
           _businessEmailConfirmController.clear();
           _businessEmailController.clear();
+          _jobTitleController.clear();
+
         }
       } else {
         

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:clock365/customWidgets.dart';
 import 'package:clock365/elements/semi_circle.dart';
 import 'package:clock365/providers/user_provider.dart';
 import 'package:clock365/theme/colors.dart';
@@ -20,6 +21,7 @@ class _SignupIntroduceScreenState extends State<SignupIntroduceScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _orgNameController = TextEditingController();
   final TextEditingController _websiteNameController = TextEditingController();
+  final CustomWidgets _customWidgets = CustomWidgets();
 
   final GlobalKey<FormFieldState> _nameKey = GlobalKey<FormFieldState>();
   final GlobalKey<FormFieldState> _orgNameKey =
@@ -177,10 +179,6 @@ class _SignupIntroduceScreenState extends State<SignupIntroduceScreen> {
     try {
       if (_nameKey.currentState?.validate() == true &&
           _orgNameKey.currentState?.validate() == true) {
-        _nameController.clear();
-        _orgNameController.clear();
-        _websiteNameController.clear();
-
         http.Response response = await http.get(Uri.parse(getOrgsUrl));
 
         List organizations = [];
@@ -194,7 +192,6 @@ class _SignupIntroduceScreenState extends State<SignupIntroduceScreen> {
         }
 
         parsedOrganizations.forEach((organization) {
-          print(organization);
           if (organization["name"] == organizationName) {
             isOrgAvailable = false;
           }
@@ -221,21 +218,15 @@ class _SignupIntroduceScreenState extends State<SignupIntroduceScreen> {
             ),
           );
         }
+        _nameController.clear();
+        _orgNameController.clear();
+        _websiteNameController.clear();
       }
     } catch (error) {
-      SnackBar(
-        margin: EdgeInsets.all(16.0),
-        behavior: SnackBarBehavior.floating,
-        content: Row(
-          children: [
-            Icon(Icons.warning_amber_outlined, color: Colors.orange),
-            SizedBox(width: 16.0),
-            Flexible(
-              child: Text("$error is already existed!"),
-            ),
-          ],
-        ),
-      );
+      _nameController.clear();
+      _orgNameController.clear();
+      _websiteNameController.clear();
+      _customWidgets.failureToste(text: error.toString(), context: context);
     }
   }
 }

@@ -29,6 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isVisitorLogin = false;
   bool _isVisible = false;
   bool _isOwnerLogin = true;
+  bool _isLoggingIn = false;
 
   Color getFillColor(FocusNode focusNode) =>
       focusNode.hasFocus ? Colors.white : kStrokeColor;
@@ -195,12 +196,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     Padding(
                         padding: EdgeInsets.symmetric(horizontal: 24),
-                        child: ElevatedButton(
-                          onPressed: login,
-                          child: Text('Login'),
-                          style: ElevatedButton.styleFrom(
-                              minimumSize: Size(double.infinity, 48)),
-                        )),
+                        child: _isLoggingIn
+                            ? Center(
+                                child: CircularProgressIndicator(),
+                              )
+                            : ElevatedButton(
+                                onPressed: login,
+                                child: Text('Login'),
+                                style: ElevatedButton.styleFrom(
+                                    minimumSize: Size(double.infinity, 48)),
+                              )),
                     SizedBox(
                       height: 24,
                     ),
@@ -233,12 +238,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (_loginMailKey.currentState?.validate() == true &&
         _loginPasswordKey.currentState?.validate() == true) {
+              setState(() {
+        _isLoggingIn = true;
+      });
       String? responce = await userRepository.login(
         email: mail,
         password: password,
         signInType: signInType,
         context: context,
       );
+       setState(() {
+        _isLoggingIn = false;
+      });
 
       if (responce == "done") {
         _loginTextEditingController.clear();

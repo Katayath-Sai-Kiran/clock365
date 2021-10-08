@@ -162,6 +162,22 @@ class _LocationCustomizationScreenState
                         TextField(
                           focusNode: _colorFocusNode,
                           decoration: InputDecoration(
+                            enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                color: primaryColor.withOpacity(colorIntensity),
+                              )),
+                              disabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                color: primaryColor.withOpacity(colorIntensity),
+                              )),
+                              focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                color: primaryColor.withOpacity(colorIntensity),
+                              )),
+                              border: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                color: primaryColor.withOpacity(colorIntensity),
+                              )),
                               hintText: '#125BB2',
                               fillColor: getFillColor(_colorFocusNode)),
                         )

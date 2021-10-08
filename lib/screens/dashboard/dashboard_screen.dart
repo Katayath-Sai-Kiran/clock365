@@ -245,8 +245,8 @@ class _StaffListState extends State<StaffList> {
                       child: Center(
                         child: SvgPicture.asset(
                           "assets/no_users.svg",
-                          height: Get.height * 0.25,
-                          width: Get.width * 0.3,
+                          height: Get.height * 0.2,
+                          width: Get.width * 0.25,
                         ),
                       ),
                     ),
@@ -309,7 +309,7 @@ class _VisitorListState extends State<VisitorList> {
   @override
   Widget build(BuildContext context) {
     final List<ClockUser> visitors =
-        widget.organizationProvider.currentOrganizationVisitors;
+        widget.organizationProvider.currentOrganizationSignedInVisitors;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

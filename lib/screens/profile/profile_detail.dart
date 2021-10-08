@@ -18,6 +18,8 @@ class ProfileDetailScreen extends StatelessWidget {
           padding: EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            
             children: [
               Image.asset('assets/sample_capture.png', height: 192, width: 192),
               SizedBox(
@@ -36,6 +38,7 @@ class ProfileDetailScreen extends StatelessWidget {
               ),
               Text(
                 user.website.toString(),
+                textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headline6,
               ),
               Padding(

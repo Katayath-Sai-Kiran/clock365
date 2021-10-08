@@ -5,13 +5,16 @@ import 'package:clock365/constants.dart';
 import 'package:clock365/customWidgets.dart';
 import 'package:clock365/models/OrganizationModel.dart';
 import 'package:clock365/models/clock_user.dart';
+import 'package:clock365/providers/user_provider.dart';
 import 'package:clock365/screens/dashboard/user_dashboard.dart';
+import 'package:clock365/screens/profile/staff_profile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 
 class UserRepository extends ChangeNotifier {
   String userId = "";
@@ -20,11 +23,6 @@ class UserRepository extends ChangeNotifier {
   final Map<String, String> headers = {
     "Content-Type": "application/json",
   };
-  Future updateCurrentCacheOrganizations(
-      {required OrganizationModel newOrganization}) async {
-    currentCacheOrganizations.add(newOrganization);
-    notifyListeners();
-  }
 
   ClockUser owner = ClockUser();
 
@@ -73,7 +71,6 @@ class UserRepository extends ChangeNotifier {
             } else if (signInType == 2) {
               await Hive.box(kUserBox).put(kSignInType, 2);
               Get.offAll(() => UserDashboard());
-
             } else {
               await Hive.box(kUserBox).put(kSignInType, 3);
 
@@ -94,12 +91,10 @@ class UserRepository extends ChangeNotifier {
 
             if (signInType == 1) {
               await Hive.box(kUserBox).put(kSignInType, 1);
-              Get.offAll(() => UserDashboard());
-
+              Get.offAll(() => StaffProfile());
             } else if (signInType == 2) {
               await Hive.box(kUserBox).put(kSignInType, 2);
               Get.offAll(() => UserDashboard());
-
             } else {
               await Hive.box(kUserBox).put(kSignInType, 3);
 
@@ -153,6 +148,9 @@ class UserRepository extends ChangeNotifier {
     required final String mail,
     required final BuildContext context,
   }) async {
+    final ClockUserProvider clockUserProvider =
+        Provider.of(context, listen: false);
+
     try {
       Uri uri = Uri.parse(kGenerateOTPEndpoint);
 
@@ -164,11 +162,50 @@ class UserRepository extends ChangeNotifier {
             text: "Verification Code Sent", context: context);
 
         return "done";
-      } else {
+      } else if (response.statusCode == 409) {
+        print(response.body);
+        clockUserProvider.updateVerifyingStatus(updatedStatus: 1);
         _customWidgets.failureToste(
-            text: "Email is already existed !", context: context);
+            text: "Email already exist !", context: context);
+      } else {
+        clockUserProvider.updateVerifyingStatus(updatedStatus: 1);
+        _customWidgets.failureToste(
+            text: "Something went wrong", context: context);
       }
     } catch (error) {
+      clockUserProvider.updateVerifyingStatus(updatedStatus: 1);
+
+      _customWidgets.failureToste(text: error.toString(), context: context);
+    }
+  }
+
+  Future resetGenerateOTP({
+    required final String mail,
+    required final BuildContext context,
+  }) async {
+    final ClockUserProvider clockUserProvider =
+        Provider.of(context, listen: false);
+
+    try {
+      Uri uri = Uri.parse(kResetOTPEndpoint);
+
+      http.Response response = await http.post(uri,
+          body: jsonEncode({"email": mail}), headers: headers);
+
+      if (response.statusCode == 200) {
+        _customWidgets.successToste(
+            text: "Verification Code Sent", context: context);
+
+        return "done";
+      } else {
+        print(response.body);
+        clockUserProvider.updateVerifyingStatus(updatedStatus: 1);
+        _customWidgets.failureToste(
+            text: "Something went wrong", context: context);
+      }
+    } catch (error) {
+      clockUserProvider.updateVerifyingStatus(updatedStatus: 1);
+
       _customWidgets.failureToste(text: error.toString(), context: context);
     }
   }
@@ -311,6 +348,7 @@ class UserRepository extends ChangeNotifier {
       }
     } catch (error) {
       print(error);
+
     }
   }
 
@@ -351,6 +389,35 @@ class UserRepository extends ChangeNotifier {
         print(response.body);
       } else {
         print(response.body);
+      }
+    } catch (error) {
+      _customWidgets.failureToste(text: error.toString(), context: context);
+    }
+  }
+
+  Future resetUserPassword(
+      {required String email,
+      required String updatedPassword,
+      required BuildContext context}) async {
+    try {
+      http.Response response = await http.put(
+        Uri.parse(
+          kResetUserPasswordEndpoint,
+        ),
+        body: jsonEncode({
+          "email": email,
+          "password": updatedPassword,
+        }),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        _customWidgets.successToste(
+            text: "Password updated successfully", context: context);
+        return "done";
+      } else {
+        Map message = jsonDecode(response.body);
+        _customWidgets.failureToste(text: message["msg"], context: context);
       }
     } catch (error) {
       _customWidgets.failureToste(text: error.toString(), context: context);

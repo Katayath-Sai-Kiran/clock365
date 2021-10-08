@@ -177,37 +177,17 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
   }
 
   void otherOrganizationSignin() {
-    ClockUser curentUser = Hive.box(kUserBox).get(kCurrentUserKey);
+    ClockUser currentUser = Hive.box(kUserBox).get(kCurrentUserKey);
 
     if (_selectedOrganization!.staffSignIn == true) {
+      
       _customWidgets.snacbarWithTwoButtons2(
+        currentUser: currentUser,
+        selectedOrganization: _selectedOrganization,
         titleText: "Are you sure you want to login !",
         primatyText: "Sign Out",
         secondaryText: "Cancle",
         context: context,
-        primaryCallback: () {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          List<ClockUser>? selectedOrganizationStaff =
-              _selectedOrganization!.staff;
-
-          bool _canSignIn = false;
-          selectedOrganizationStaff?.forEach((element) {
-            if (element.id == curentUser.id) {
-              _canSignIn = true;
-            }
-            if (_canSignIn) {
-              Navigator.of(context).pushNamed(
-                kUserConfirmSignInScreen,
-                arguments: _selectedOrganization,
-              );
-            } else {
-              _customWidgets.failureToste(
-                  text:
-                      "You are not registered with ${_selectedOrganization?.organizationName}",
-                  context: context);
-            }
-          });
-        },
         secondaryCallback: () =>
             ScaffoldMessenger.of(context).hideCurrentSnackBar(),
       );
@@ -219,6 +199,7 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
   }
 
   void currentOrganizationSignin() {
+    print("current org");
     final String orgName = _selectedOrganization!.organizationName.toString();
     ClockUser curentUser = Hive.box(kUserBox).get(kCurrentUserKey);
     if (_selectedOrganization!.staffSignIn == true) {
@@ -229,21 +210,20 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
         if (element.id == curentUser.id) {
           _canSignIn = true;
         }
-        if (_canSignIn) {
-          Navigator.of(context).pushNamed(
-            kUserConfirmSignInScreen,
-            arguments: _selectedOrganization,
-          );
-        } else {
-          _customWidgets.failureToste(
-              text:
-                  "You are not registered with $orgName", context: context);
-        }
+       
       });
+       if (_canSignIn) {
+        Navigator.of(context).pushNamed(
+          kUserConfirmSignInScreen,
+          arguments: _selectedOrganization,
+        );
+      } else {
+        _customWidgets.failureToste(
+            text: "You are not registered with $orgName", context: context);
+      }
     } else {
       _customWidgets.failureToste(
-          text:
-              "Staff Cannot SignIn Into $orgName", context: context);
+          text: "Staff Cannot SignIn Into $orgName", context: context);
     }
   }
 

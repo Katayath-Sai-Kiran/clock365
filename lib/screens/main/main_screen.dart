@@ -20,25 +20,17 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 1;
 
   @override
-  void initState() {
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
-      
-      Provider.of<OrganizationProvider>(context, listen: false)
-          .updateOrganizationLoadingStatus(updatedState: true);
-      Provider.of<OrganizationProvider>(context, listen: false)
-          .getCurrentOrganizationSignedInVisitors(context: context);
-      Provider.of<OrganizationProvider>(context, listen: false)
-          .getCurrentOrganizationSignedInStaff(context: context);
-      Provider.of<ClockUserProvider>(context, listen: false)
-          .getCurrentUserSites(context: context);
-      Provider.of<OrganizationProvider>(context, listen: false)
-          .getCurrentOrganizationStaff(context: context);
+void initState() {
+      super.initState();
 
       Provider.of<OrganizationProvider>(context, listen: false)
-          .updateOrganizationLoadingStatus(updatedState: false);
-    });
-    super.initState();
-  
+        .getCurrentOrganizationSignedInVisitors(context: context);
+    Provider.of<OrganizationProvider>(context, listen: false)
+        .getCurrentOrganizationSignedInStaff(context: context);
+    Provider.of<ClockUserProvider>(context, listen: false)
+        .getCurrentUserSites(context: context);
+    Provider.of<OrganizationProvider>(context, listen: false)
+        .getCurrentOrganizationStaff(context: context);
   }
 
   @override

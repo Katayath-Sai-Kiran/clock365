@@ -160,7 +160,6 @@ class _SignupPasswordScreenState extends State<SignupPasswordScreen> {
     if (_createPasswordKey.currentState?.validate() == true &&
         _confirmPasswordKey.currentState?.validate() == true &&
         password == confirmPassword) {
-      print(userData);
 
       String? response = await userRepository.signUpClockUser(
         context: context,
