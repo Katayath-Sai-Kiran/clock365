@@ -110,8 +110,10 @@ class _SignupScreenState extends State<SignupScreen> {
                               onFieldSubmitted: (val) {
                                 _confirmMailKey.currentState!.validate();
                               },
-                              validator: (val) => val !=
-                                      _businessEmailController.text.toString()
+                              validator: (val) => val!.trim() !=
+                                      _businessEmailController.text
+                                          .toString()
+                                          .trim()
                                   ? "Emails do not match"
                                   : null,
                           

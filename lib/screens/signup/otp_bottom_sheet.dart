@@ -158,7 +158,7 @@ class _OTPHeaderState extends State<OTPHeader> {
                     child: ElevatedButton(
                       onPressed: _isTimeOut
                           ? () async {
-                            Provider.of<UserRepository>(context,
+                              Provider.of<UserRepository>(context,
                                       listen: false)
                                   .generateOTP(
                                       mail: widget.mail, context: context);
@@ -186,6 +186,7 @@ class _OTPHeaderState extends State<OTPHeader> {
                         : ElevatedButton(
                             onPressed: () async {
                               setState(() {
+
                                 _timer.cancel();
 
                                 _isSubmitLoading = true;

@@ -17,15 +17,15 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
 class UserRepository extends ChangeNotifier {
-  String userId = "";
   List<OrganizationModel> currentCacheOrganizations = [];
   final CustomWidgets _customWidgets = CustomWidgets();
   final Map<String, String> headers = {
     "Content-Type": "application/json",
   };
 
-  ClockUser owner = ClockUser();
 
+
+  //login into application
   Future login({
     required String email,
     required String password,
@@ -42,11 +42,8 @@ class UserRepository extends ChangeNotifier {
         }),
         headers: {"Content-Type": "application/json"},
       );
-      print(responce.body);
 
       Map<String, dynamic> userJson = jsonDecode(responce.body);
-
-      print("user response from login $userJson");
 
       if (responce.statusCode == 200) {
         //user available and check is verified or not
@@ -115,12 +112,12 @@ class UserRepository extends ChangeNotifier {
         _customWidgets.failureToste(text: message["msg"], context: context);
       }
     } catch (e) {
-      print("error");
-
+      debugPrint("error when loging in");
       _customWidgets.failureToste(text: e.toString(), context: context);
     }
   }
 
+  //verify user mail with otp
   Future verifyUserGmail({
     required String mail,
     required otpCode,
@@ -140,10 +137,12 @@ class UserRepository extends ChangeNotifier {
         _customWidgets.failureToste(text: message["msg"], context: context);
       }
     } catch (e) {
+      debugPrint("error in verifing user email");
       _customWidgets.failureToste(text: e.toString(), context: context);
     }
   }
 
+  //generate otp when signing in
   Future generateOTP({
     required final String mail,
     required final BuildContext context,
@@ -163,7 +162,6 @@ class UserRepository extends ChangeNotifier {
 
         return "done";
       } else if (response.statusCode == 409) {
-        print(response.body);
         clockUserProvider.updateVerifyingStatus(updatedStatus: 1);
         _customWidgets.failureToste(
             text: "Email already exist !", context: context);
@@ -173,12 +171,15 @@ class UserRepository extends ChangeNotifier {
             text: "Something went wrong", context: context);
       }
     } catch (error) {
-      clockUserProvider.updateVerifyingStatus(updatedStatus: 1);
+      debugPrint("error when in generating otp");
 
+      clockUserProvider.updateVerifyingStatus(updatedStatus: 1);
       _customWidgets.failureToste(text: error.toString(), context: context);
     }
   }
 
+
+//generate otp when resetting the password
   Future resetGenerateOTP({
     required final String mail,
     required final BuildContext context,
@@ -195,21 +196,20 @@ class UserRepository extends ChangeNotifier {
       if (response.statusCode == 200) {
         _customWidgets.successToste(
             text: "Verification Code Sent", context: context);
-
         return "done";
       } else {
-        print(response.body);
         clockUserProvider.updateVerifyingStatus(updatedStatus: 1);
         _customWidgets.failureToste(
-            text: "Something went wrong", context: context);
+            text: "Something went wrong !", context: context);
       }
     } catch (error) {
+      debugPrint("error when resending otp in forgot passwor dscreen");
       clockUserProvider.updateVerifyingStatus(updatedStatus: 1);
-
       _customWidgets.failureToste(text: error.toString(), context: context);
     }
   }
 
+  //sign up user
   Future signUpClockUser({
     required String password,
     required BuildContext context,
@@ -235,7 +235,6 @@ class UserRepository extends ChangeNotifier {
       );
       Map responseData = jsonDecode(response.body);
       if (response.statusCode == 200) {
-        print(response.body);
         Navigator.of(context).pushReplacementNamed(kLoginRoute);
         return "done";
       } else {
@@ -243,11 +242,14 @@ class UserRepository extends ChangeNotifier {
         _customWidgets.failureToste(text: message, context: context);
       }
     } catch (error) {
+      debugPrint("error when signup action");
       _customWidgets.failureToste(text: error.toString(), context: context);
     }
   }
 
-  Future getMatches({required String pattern}) async {
+  //get staff suggestions in registration
+  Future getMatches(
+      {required String pattern, required BuildContext context}) async {
     final url = "$kBaseUrl/api/v1/staff/$pattern/suggestions";
     try {
       Uri uri = Uri.parse(url);
@@ -264,15 +266,14 @@ class UserRepository extends ChangeNotifier {
           ..organizationId = staffMember["current_org"]["\$oid"];
         parsedStaff.add(ClockUser.fromJson(staffMember));
       });
-
-      print("staff are $parsedStaff");
-
       return parsedStaff;
-    } catch (e) {
-      print("error $e");
+    } catch (error) {
+      debugPrint("error when getting staff matches");
+      _customWidgets.failureToste(text: error.toString(), context: context);
     }
   }
 
+  //manual user/visitor sign into organization
   Future manualSignInUser({
     required String organizationName,
     required String userId,
@@ -347,12 +348,14 @@ class UserRepository extends ChangeNotifier {
             .pushNamedAndRemoveUntil(kMainScreen, (route) => false);
       }
     } catch (error) {
-      print(error);
-
+      debugPrint("error when manual user/visitor signing");
+      _customWidgets.failureToste(text: error.toString(), context: context);
     }
   }
 
-  Future getCurrentSites({required String? userId}) async {
+  //fetch current user organizations
+  Future getCurrentSites(
+      {required String? userId, required BuildContext context}) async {
     try {
       //get sites
       http.Response response = await http.get(Uri.parse(
@@ -368,15 +371,17 @@ class UserRepository extends ChangeNotifier {
 
         return currentOrganizations;
       } else {
-        print("error");
+        _customWidgets.failureToste(
+            text: jsonDecode(response.body)["msg"], context: context);
       }
       notifyListeners();
     } catch (error) {
-      print("error $error");
-      return [];
+      debugPrint("error when etching current user organizations");
+      _customWidgets.failureToste(text: error.toString(), context: context);
     }
   }
 
+  //update visitor and user sign permissions at registration of organization
   Future updateSignInStatus(
       {required Map data, required BuildContext context}) async {
     try {
@@ -386,15 +391,16 @@ class UserRepository extends ChangeNotifier {
         body: jsonEncode(data),
       );
       if (response.statusCode == 200) {
-        print(response.body);
+        return "done";
       } else {
-        print(response.body);
+        debugPrint(response.body);
       }
     } catch (error) {
       _customWidgets.failureToste(text: error.toString(), context: context);
     }
   }
 
+  //reset user password
   Future resetUserPassword(
       {required String email,
       required String updatedPassword,

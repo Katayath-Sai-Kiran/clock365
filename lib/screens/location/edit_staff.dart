@@ -62,7 +62,8 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                     ),
                     suggestionsCallback: (pattern) async {
                       List<ClockUser> staff =
-                          await userRepository.getMatches(pattern: pattern) ??
+                          await userRepository.getMatches(
+                              pattern: pattern, context: context) ??
                               [];
 
                       List<ClockUser> filteredStaff = staff

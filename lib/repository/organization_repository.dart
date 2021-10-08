@@ -16,45 +16,43 @@ class OrganizationRepository extends ChangeNotifier {
     "Content-Type": "application/json",
   };
 
+  //set selected organization as cache current organization
   Future setCurrentOrganization(
       {required OrganizationModel updatedOrganization,
       required String colorCode,
       required double colorOpasity}) async {
     updatedOrganization.colorCode = colorCode;
     updatedOrganization.colorOpacity = colorOpasity;
-
     ClockUser currentUser = await Hive.box(kUserBox).get(kCurrentUserKey);
     currentUser.currentOrganization = updatedOrganization;
     await Hive.box(kUserBox).put(kCurrentUserKey, currentUser);
   }
 
+  //add staff member to selected organization
   Future addStaffToOrganization({
     required ClockUser user,
     required String organizationId,
     required BuildContext context,
   }) async {
     try {
-      print("received clock user id is ${user.id}");
       final Uri uri = Uri.parse(kAddnNewStaffEndPoint);
       String body = jsonEncode({"org_id": organizationId, "user_id": user.id});
-
       http.Response response =
           await http.put(uri, headers: headers, body: body);
-
       if (response.statusCode == 200) {
         _customWidgets.successToste(
-            text: "staff updated successfully updated", context: context);
+            text: "Staff updated successfully updated", context: context);
         return "done";
       } else {
-        print(response.body);
         _customWidgets.failureToste(
-            text: "something went wrong", context: context);
+            text: "Something went wrong !", context: context);
       }
     } catch (error) {
-      print(error);
+      _customWidgets.failureToste(text: error.toString(), context: context);
     }
   }
 
+  //remove staff from selected organziation
   Future removeStaffFromOrganization({
     required ClockUser user,
     required String organizationId,
@@ -68,19 +66,19 @@ class OrganizationRepository extends ChangeNotifier {
           await http.put(uri, headers: headers, body: body);
 
       if (response.statusCode == 200) {
-        print(response.body);
         _customWidgets.successToste(
-            text: "staff updated successfully updated", context: context);
+            text: "Staff updated successfully updated", context: context);
         return "done";
       } else {
         _customWidgets.failureToste(
-            text: "Something went wrong", context: context);
+            text: "Something went wrong !", context: context);
       }
     } catch (error) {
-      print(error);
+      _customWidgets.failureToste(text: error.toString(), context: context);
     }
   }
 
+  //add new organization to curretnt user
   Future registerOrganization({
     required Map data,
     required BuildContext context,
@@ -88,14 +86,10 @@ class OrganizationRepository extends ChangeNotifier {
   }) async {
     try {
       final Uri uri = Uri.parse(kUserOrganizationResisterEndpoint);
-
-      final String encodedData = jsonEncode(data);
-
       http.Response response =
-          await http.post(uri, headers: headers, body: encodedData);
+          await http.post(uri, headers: headers, body: jsonEncode(data));
 
       if (response.statusCode == 201) {
-        //request successfully
         _customWidgets.successToste(
             text: "Organization successfully registered", context: context);
       } else {
@@ -107,6 +101,7 @@ class OrganizationRepository extends ChangeNotifier {
     }
   }
 
+  //fetch organization suggestions when manual signin and registering organization
   Future<List<OrganizationModel>> getOrganizationSuggetions(
       {required String pattern, required BuildContext context}) async {
     try {
@@ -142,6 +137,8 @@ class OrganizationRepository extends ChangeNotifier {
           organization["visitor_sign_in"] = organization["visitor_sign_in"];
           parsedOrganizations.add(OrganizationModel.fromJson(organization));
         });
+      } else {
+        return [];
       }
       return parsedOrganizations;
     } catch (error) {
@@ -150,6 +147,7 @@ class OrganizationRepository extends ChangeNotifier {
     }
   }
 
+  //add already registerd organization to current user organizations
   Future addExistingOrganization(
       {required Map data,
       required BuildContext context,
@@ -175,6 +173,7 @@ class OrganizationRepository extends ChangeNotifier {
     }
   }
 
+  //get current organization signed In  staff to display at dashboard
   Future<List<ClockUser>?> getCurrentOrganizationsignedStaff(
       {required final String organizationId,
       required final BuildContext context}) async {
@@ -196,6 +195,7 @@ class OrganizationRepository extends ChangeNotifier {
     }
   }
 
+  //fetch organization signed In  visitors
   Future<List<ClockUser>?> getCurrentOrganizationsignedVisitors(
       {required final BuildContext context}) async {
     List<ClockUser> staff = [];
@@ -220,6 +220,7 @@ class OrganizationRepository extends ChangeNotifier {
     }
   }
 
+  //fetch current user current organization registered staff
   Future<List<ClockUser>?> getCurrentOrganizationStaff(
       {required final String organizationId,
       required final BuildContext context}) async {
@@ -238,7 +239,8 @@ class OrganizationRepository extends ChangeNotifier {
         print(response.body);
       }
     } catch (error) {
-      print("error is $error");
+      debugPrint("error when fetching current organization staff");
+      _customWidgets.failureToste(text: error.toString(), context: context);
     }
   }
 
@@ -308,6 +310,8 @@ class OrganizationRepository extends ChangeNotifier {
         Map message = jsonDecode(response.body);
         _customWidgets.failureToste(text: message["msg"], context: context);
       }
-    } catch (error) {}
+    } catch (error) {
+      _customWidgets.failureToste(text: error.toString(), context: context);
+    }
   }
 }

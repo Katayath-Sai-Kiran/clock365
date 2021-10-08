@@ -25,8 +25,8 @@ const String kSignInType = "signInType";
 const String kUserKey = 'clock_user.KEY';
 
 // API
-const String kBaseUrl = 'https://clock365.wielabs.tech';
-//const String kBaseUrl = 'http://192.168.1.48:6001';
+//const String kBaseUrl = 'https://clock365.wielabs.tech';
+const String kBaseUrl = 'http://192.168.1.48:6001';
 
 // Supported locales
 const kSupportedLocales = <Locale>[
