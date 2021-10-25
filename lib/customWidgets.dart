@@ -173,7 +173,6 @@ class CustomWidgets {
 
                         bool _canSignIn = false;
                         selectedOrganizationStaff?.forEach((element) {
-                          print("${element.id} ${currentUser.id}");
                           if (element.id == currentUser.id) {
                             _canSignIn = true;
                           }

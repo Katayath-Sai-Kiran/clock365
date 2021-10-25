@@ -7,7 +7,6 @@ import 'package:clock365/providers/organization_provider.dart';
 import 'package:clock365/providers/user_provider.dart';
 import 'package:clock365/repository/userRepository.dart';
 import 'package:clock365/route_generator.dart';
-import 'package:clock365/screens/dashboard/user_dashboard.dart';
 import 'package:clock365/screens/login/login_screen.dart';
 import 'package:clock365/screens/main/main_screen.dart';
 import 'package:clock365/screens/profile/staff_profile.dart';
@@ -25,7 +24,6 @@ import 'repository/organization_repository.dart';
 void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(ClockUserAdapter());
-  Hive.registerAdapter(OrganizationAdapter());
   Hive.registerAdapter(OrganizationModelAdapter());
 
   await Hive.openBox<dynamic>(kUserBox);
@@ -94,8 +92,6 @@ class _Clock365AppState extends State<Clock365App> {
               _isFirstTime = box.get("isFirstTime") ?? true;
             }
           }
-
-          // ClockUser currentUser = box.get(kCurrentUserKey);
           return GetMaterialApp(
             debugShowCheckedModeBanner: false,
             localizationsDelegates: [
@@ -119,7 +115,7 @@ class _Clock365AppState extends State<Clock365App> {
                     ? signInType == 1
                         ? StaffProfile()
                         : signInType == 2
-                            ? UserDashboard()
+                            ? StaffProfile()
                             : MainScreen()
                     : LoginScreen(),
           );

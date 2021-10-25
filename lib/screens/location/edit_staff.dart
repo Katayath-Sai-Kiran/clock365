@@ -29,7 +29,6 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
     final double _height = MediaQuery.of(context).size.height;
     final ThemeData themeData = Theme.of(context);
 
- 
     final UserRepository userRepository =
         Provider.of<UserRepository>(context, listen: false);
 
@@ -61,26 +60,29 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                       controller: _staffNameController,
                     ),
                     suggestionsCallback: (pattern) async {
-                      List<ClockUser> staff =
-                          await userRepository.getMatches(
-                              pattern: pattern, context: context) ??
-                              [];
+                      final List<ClockUser> temp = [];
+                      if (pattern.length != 0) {
+                        List<ClockUser> staff = await userRepository.getMatches(
+                                pattern: pattern, context: context) ??
+                            [];
 
-                      List<ClockUser> filteredStaff = staff
-                          .where((element) => element.name!
-                              .toLowerCase()
-                              .startsWith(pattern.toLowerCase()))
-                          .toList();
+                        List<ClockUser> filteredStaff = staff
+                            .where((element) => element.name!
+                                .toLowerCase()
+                                .startsWith(pattern.toLowerCase()))
+                            .toList();
 
-                      if (staff.length == 0) {
-                        return <ClockUser>[
-                          ClockUser(
-                            name: "No Staff Found",
-                          ),
-                        ];
-                      } else {
-                        return filteredStaff;
+                        if (staff.length == 0) {
+                          return <ClockUser>[
+                            ClockUser(
+                              name: "No Staff Found",
+                            ),
+                          ];
+                        } else {
+                          return filteredStaff;
+                        }
                       }
+                      return temp;
                     },
                     itemBuilder: (BuildContext context, ClockUser clockUser) {
                       return MemberItem(
@@ -124,7 +126,6 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
                   ),
                   ElevatedButton(
                     onPressed: () async {
-                      print(staff);
                       Navigator.of(context).pushNamed(
                         kReadySetGoScreen,
                         arguments: curretnOrganization,

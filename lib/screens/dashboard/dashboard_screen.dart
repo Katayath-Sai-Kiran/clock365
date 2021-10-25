@@ -16,6 +16,7 @@ import 'package:provider/provider.dart';
 
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:clock365/models/OrganizationModel.dart';
+import 'package:get/get.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -186,15 +187,15 @@ class _DashboardScreenState extends State<DashboardScreen>
                         child: TabBarView(
                           controller: _tabController,
                           children: [
-                            StaffList(
+                            CustomUserList(
+                                type: 1,
                                 organizationProvider: organizationProvider),
-                            VisitorList(
+                            CustomUserList(
+                                type: 2,
                                 organizationProvider: organizationProvider),
                           ],
                         ),
                       ),
-
-                      //StaffList(),
                     ],
                   ),
                 ),
@@ -207,51 +208,81 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 }
 
-class StaffList extends StatefulWidget {
+class CustomUserList extends StatefulWidget {
+  final int type;
   final OrganizationProvider organizationProvider;
-  const StaffList({Key? key, required this.organizationProvider})
+  const CustomUserList(
+      {Key? key, required this.type, required this.organizationProvider})
       : super(key: key);
 
   @override
-  _StaffListState createState() => _StaffListState();
+  _CustomUserListState createState() => _CustomUserListState();
 }
 
-class _StaffListState extends State<StaffList> {
+class _CustomUserListState extends State<CustomUserList> {
   @override
   Widget build(BuildContext context) {
-    final List<ClockUser> staff =
-        widget.organizationProvider.currentOrganizationSignedInStaff;
+    List<ClockUser> staff = [];
+    List<ClockUser> visitors = [];
+    return Consumer<OrganizationProvider>(
+        builder: (context, OrganizationProvider organizationProvider, _) {
+      if (widget.type == 1) {
+        staff = organizationProvider.currentOrganizationSignedInStaff;
+      } else {
+        visitors = organizationProvider.currentOrganizationSignedInVisitors;
+      }
 
-    return widget.organizationProvider.isOrganizationDetailsLoading
-        ? Center(child: CircularProgressIndicator())
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                height: 16,
-              ),
-              staff.length > 0
-                  ? ListView.builder(
-                      physics: NeverScrollableScrollPhysics(),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: 16,
+          ),
+          staff.length > 0
+              ? RefreshIndicator(
+                  displacement: 20.0,
+                  color: Theme.of(context).colorScheme.primary,
+                  triggerMode: RefreshIndicatorTriggerMode.anywhere,
+                  onRefresh: () {
+                    if (widget.type == 1) {
+                      return Provider.of<OrganizationProvider>(context,
+                              listen: false)
+                          .getCurrentOrganizationSignedInStaff(
+                              context: context);
+                    } else {
+                      return Provider.of<OrganizationProvider>(context,
+                              listen: false)
+                          .getCurrentOrganizationSignedInVisitors(
+                              context: context);
+                    }
+                  },
+                  child: Container(
+                    height: Get.height * 0.4,
+                    child: ListView.builder(
+                      // physics: NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
-                      itemCount: staff.length,
+                      itemCount:
+                          widget.type == 1 ? staff.length : visitors.length,
                       itemBuilder: (context, index) => StaffItem(
-                        user: staff[index],
-                      ),
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.only(top: 48.0, right: 16.0),
-                      child: Center(
-                        child: SvgPicture.asset(
-                          "assets/no_users.svg",
-                          height: Get.height * 0.2,
-                          width: Get.width * 0.25,
-                        ),
+                        user: widget.type == 1 ? staff[index] : visitors[index],
                       ),
                     ),
-            ],
-          );
+                  ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.only(top: 48.0, right: 16.0),
+                  child: Center(
+                    child: SvgPicture.asset(
+                      "assets/no_users.svg",
+                      height: Get.height * 0.2,
+                      width: Get.width * 0.25,
+                    ),
+                  ),
+                ),
+        ],
+      );
+    });
   }
 }
 
@@ -288,89 +319,6 @@ class _StaffItemState extends State<StaffItem> {
               Expanded(
                   child: Text(widget.user.name.toString(),
                       style: Theme.of(context).textTheme.subtitle2))
-            ],
-          )),
-    );
-  }
-}
-
-class VisitorList extends StatefulWidget {
-  final OrganizationProvider organizationProvider;
-  const VisitorList({
-    Key? key,
-    required this.organizationProvider,
-  }) : super(key: key);
-
-  @override
-  _VisitorListState createState() => _VisitorListState();
-}
-
-class _VisitorListState extends State<VisitorList> {
-  @override
-  Widget build(BuildContext context) {
-    final List<ClockUser> visitors =
-        widget.organizationProvider.currentOrganizationSignedInVisitors;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          height: 16,
-        ),
-        visitors.length > 0
-            ? ListView.builder(
-                physics: NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: visitors.length,
-                itemBuilder: (context, index) => VisitorItem(
-                  visitor: visitors[index],
-                ),
-              )
-            : Padding(
-                padding: const EdgeInsets.only(top: 48.0, right: 16.0),
-                child: Center(
-                  child: SvgPicture.asset(
-                    "assets/no_users.svg",
-                    height: Get.height * 0.2,
-                    width: Get.width * 0.25,
-                  ),
-                ),
-              ),
-      ],
-    );
-  }
-}
-
-class VisitorItem extends StatelessWidget {
-  final ClockUser visitor;
-
-  VisitorItem({required this.visitor});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(width: 2, color: kStrokeColor)),
-      margin: EdgeInsets.only(top: 8),
-      child: TextButton(
-          onPressed: () => {},
-          child: Row(
-            children: [
-              ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: Image.asset(
-                    'assets/sample_capture.png',
-                    width: 48,
-                    height: 48,
-                  )),
-              SizedBox(
-                width: 16,
-              ),
-              Expanded(
-                child: Text(visitor.name.toString(),
-                    style: Theme.of(context).textTheme.subtitle2),
-              )
             ],
           )),
     );

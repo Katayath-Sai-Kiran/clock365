@@ -199,7 +199,6 @@ class _UserSignInScreenState extends State<UserSignInScreen> {
   }
 
   void currentOrganizationSignin() {
-    print("current org");
     final String orgName = _selectedOrganization!.organizationName.toString();
     ClockUser curentUser = Hive.box(kUserBox).get(kCurrentUserKey);
     if (_selectedOrganization!.staffSignIn == true) {

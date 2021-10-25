@@ -93,9 +93,7 @@ class _CapturePhotoScreenState extends State<CapturePhotoScreen> {
                     ),
                     Container(
                         alignment: Alignment.bottomCenter,
-                        child: _isSigningIn
-                            ? Center(child: CircularProgressIndicator())
-                            : ElevatedButton(
+                        child: ElevatedButton(
                           onPressed: () async {
                             if (_capturedImage == null) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -118,7 +116,7 @@ class _CapturePhotoScreenState extends State<CapturePhotoScreen> {
                               );
                             } else {
                               setState(() {
-                                      _isSigningIn = true;
+                                  _isSigningIn = true;
                                     });
                               userRepository.manualSignInUser(
                                 context: context,
@@ -129,11 +127,13 @@ class _CapturePhotoScreenState extends State<CapturePhotoScreen> {
                                 userId: currentUser.id!,
                               );
                               setState(() {
-                                      _isSigningIn = false;
+                                  _isSigningIn = false;
                                     });
                             }
                           },
-                          child: Text(
+                          child: _isSigningIn == true
+                              ? Center(child: CircularProgressIndicator())
+                              : Text(
                             S.of(context).confirmSignIn,
                             style: Theme.of(context).textTheme.button?.copyWith(
                                 color:

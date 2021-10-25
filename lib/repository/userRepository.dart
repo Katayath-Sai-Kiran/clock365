@@ -5,6 +5,7 @@ import 'package:clock365/constants.dart';
 import 'package:clock365/customWidgets.dart';
 import 'package:clock365/models/OrganizationModel.dart';
 import 'package:clock365/models/clock_user.dart';
+import 'package:clock365/providers/organization_provider.dart';
 import 'package:clock365/providers/user_provider.dart';
 import 'package:clock365/screens/dashboard/user_dashboard.dart';
 import 'package:clock365/screens/profile/staff_profile.dart';
@@ -22,8 +23,6 @@ class UserRepository extends ChangeNotifier {
   final Map<String, String> headers = {
     "Content-Type": "application/json",
   };
-
-
 
   //login into application
   Future login({
@@ -64,10 +63,10 @@ class UserRepository extends ChangeNotifier {
 
             if (signInType == 1) {
               await Hive.box(kUserBox).put(kSignInType, 1);
-              Get.offAll(() => UserDashboard());
+              Get.offAll(() => StaffProfile());
             } else if (signInType == 2) {
               await Hive.box(kUserBox).put(kSignInType, 2);
-              Get.offAll(() => UserDashboard());
+              Get.offAll(() => StaffProfile());
             } else {
               await Hive.box(kUserBox).put(kSignInType, 3);
 
@@ -91,7 +90,7 @@ class UserRepository extends ChangeNotifier {
               Get.offAll(() => StaffProfile());
             } else if (signInType == 2) {
               await Hive.box(kUserBox).put(kSignInType, 2);
-              Get.offAll(() => UserDashboard());
+              Get.offAll(() => StaffProfile());
             } else {
               await Hive.box(kUserBox).put(kSignInType, 3);
 
@@ -177,7 +176,6 @@ class UserRepository extends ChangeNotifier {
       _customWidgets.failureToste(text: error.toString(), context: context);
     }
   }
-
 
 //generate otp when resetting the password
   Future resetGenerateOTP({
@@ -281,6 +279,7 @@ class UserRepository extends ChangeNotifier {
     required File profileImage,
     required BuildContext context,
   }) async {
+    print(signInType);
     try {
       var request =
           http.MultipartRequest("PUT", Uri.parse(kstaffSignInEndPoint));
@@ -300,8 +299,6 @@ class UserRepository extends ChangeNotifier {
             text: "Image Is too large to upload please select another image",
             context: context);
       } else {
-        print("response from manual signIn $res");
-
         Map<String, dynamic> organization =
             jsonDecode(await response.stream.bytesToString());
         List previousStaff = organization["staff"];
@@ -344,12 +341,19 @@ class UserRepository extends ChangeNotifier {
         user.currentOrganization = changedOrganization;
         await Hive.box(kUserBox).put(kCurrentUserKey, user);
 
+        //update the provider
+
         Navigator.of(context)
             .pushNamedAndRemoveUntil(kMainScreen, (route) => false);
       }
     } catch (error) {
       debugPrint("error when manual user/visitor signing");
       _customWidgets.failureToste(text: error.toString(), context: context);
+    } finally {
+      Provider.of<OrganizationProvider>(context, listen: false)
+          .getCurrentOrganizationSignedInStaff(context: context);
+      Provider.of<OrganizationProvider>(context, listen: false)
+          .getCurrentOrganizationSignedInVisitors(context: context);
     }
   }
 

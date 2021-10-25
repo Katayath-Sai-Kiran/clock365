@@ -47,12 +47,10 @@ class OrganizationProvider extends ChangeNotifier {
         currentOrganizationStaff = staff;
       } else {
         Map message = jsonDecode(response.body);
-        currentOrganizationStaff = [];
         _customWidgets.failureToste(text: message["msg"], context: context);
       }
       notifyListeners();
     } catch (error) {
-      currentOrganizationStaff = [];
       notifyListeners();
 
       _customWidgets.failureToste(text: error.toString(), context: context);
@@ -62,7 +60,6 @@ class OrganizationProvider extends ChangeNotifier {
   Future getCurrentOrganizationSignedInStaff({
     required BuildContext context,
   }) async {
-    print("called when loading");
     final ClockUser clockUser = Hive.box(kUserBox).get(kCurrentUserKey);
     final OrganizationModel? currentOrganization =
         clockUser.currentOrganization;
@@ -80,7 +77,6 @@ class OrganizationProvider extends ChangeNotifier {
       } else {
         Map message = jsonDecode(response.body);
         _customWidgets.failureToste(text: message["msg"], context: context);
-        currentOrganizationSignedInStaff = [];
       }
       notifyListeners();
     } catch (error) {
@@ -100,7 +96,6 @@ class OrganizationProvider extends ChangeNotifier {
       http.Response response = await http.get(url);
       if (response.statusCode == 200) {
         List responseList = jsonDecode(response.body);
-        print(responseList);
         currentOrganizationSignedInVisitors = responseList
             .map((e) => ClockUser.fromJson(e as Map<String, dynamic>))
             .toList();

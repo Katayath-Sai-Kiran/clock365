@@ -118,7 +118,6 @@ class ProfileStatus extends StatelessWidget {
         builder: (context, OrganizationProvider organizationProvider, _) {
       final int presentStaff =
           organizationProvider.currentOrganizationSignedInStaff.length;
-      print(organizationProvider.currentOrganization?.staff);
       final int staffAbsent =
           organizationProvider.currentOrganizationStaff.length - presentStaff;
       return Padding(

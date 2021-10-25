@@ -108,7 +108,6 @@ class _LocationOptionsScreenState extends State<LocationOptionsScreen> {
               margin: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               child: ElevatedButton(
                 onPressed: () {
-                  print(currentOrganization.visitorSignIn);
                   userRepository.updateSignInStatus(data: {
                     "org_id": currentOrganization.organizationId,
                     "staff_sign_in": currentOrganization.staffSignIn,

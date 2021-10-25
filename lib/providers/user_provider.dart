@@ -17,27 +17,28 @@ class ClockUserProvider extends ChangeNotifier {
   List<OrganizationModel>? currentUserOrganizations = [];
   int attendencePresentDays = 0;
 
-  
+  //user in reseting password to show progress
   int verifyingStatus = 1;
 
+  //update verifying status when resetting password
   void updateVerifyingStatus({required int updatedStatus}) {
     verifyingStatus = updatedStatus;
     notifyListeners();
   }
 
+  //add staff to selected organization temp
   Future addStaff({required newStaffMember}) async {
     staff.add(newStaffMember);
     notifyListeners();
   }
 
-  Future getCurrentUser({required BuildContext context}) async {
-    try {
-      notifyListeners();
-    } catch (error) {
-      _customWidgets.failureToste(text: error.toString(), context: context);
-    }
+  //delete staff from selected organization temp
+  Future deleteStaff({required int staffIndex}) async {
+    staff.removeAt(staffIndex);
+    notifyListeners();
   }
 
+//add organizations to current user temp
   Future updateCurrentUserSites(
       {required OrganizationModel addedOrganizarion}) async {
     currentUserOrganizations!.add(addedOrganizarion);
@@ -60,14 +61,11 @@ class ClockUserProvider extends ChangeNotifier {
         currentUserOrganizations = currentOrganizations;
       } else {
         Map message = jsonDecode(response.body);
-        currentUserOrganizations = [];
         _customWidgets.failureToste(text: message["msg"], context: context);
       }
       notifyListeners();
     } catch (error) {
-      currentUserOrganizations = [];
       _customWidgets.failureToste(text: error.toString(), context: context);
-      notifyListeners();
     }
   }
 
@@ -77,32 +75,23 @@ class ClockUserProvider extends ChangeNotifier {
           await Hive.box(kUserBox).get(kCurrentUserKey);
       final OrganizationModel? currentOrganization =
           currentUser.currentOrganization;
-      print(
-          "urk is ${kGetAttendenceDetailsEndPoint.replaceFirst("user_id", currentUser.id.toString()).toString().replaceAll("org_value", currentOrganization!.organizationId.toString())}");
       final Uri uri = Uri.parse(kGetAttendenceDetailsEndPoint
           .replaceFirst("user_id", currentUser.id.toString())
           .toString()
           .replaceAll(
-              "org_value", currentOrganization.organizationId.toString()));
+              "org_value", currentOrganization!.organizationId.toString()));
+ 
       http.Response response = await http.get(uri);
       if (response.statusCode == 200) {
         Map data = jsonDecode(response.body);
         attendencePresentDays = data["totalDaysPresent"];
-        notifyListeners();
       } else {
-        //Map message = jsonDecode(response.body);
-        print(response.body);
         _customWidgets.failureToste(
-            text: "Something went wrong", context: context);
+            text: "Something went wrong !", context: context);
       }
+      notifyListeners();
     } catch (error) {
-      print(error.toString());
-      //_customWidgets.failureToste(text: error.toString(), context: context);
+      _customWidgets.failureToste(text: error.toString(), context: context);
     }
-  }
-
-  Future deleteStaff({required int staffIndex}) async {
-    staff.removeAt(staffIndex);
-    notifyListeners();
   }
 }

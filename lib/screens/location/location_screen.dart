@@ -316,7 +316,6 @@ class SearchOrganizationItem extends StatelessWidget {
       if (organization.organizationName!.isEmpty == true) {
         orgNameController.clear();
       } else {
-        print("new org");
         clockUserProvider.updateCurrentUserSites(
             addedOrganizarion: organization);
 
@@ -333,7 +332,6 @@ class SearchOrganizationItem extends StatelessWidget {
         orgNameController.clear();
       }
     } else {
-      print("esisting org");
       clockUserProvider.updateCurrentUserSites(addedOrganizarion: organization);
 
       //already existed organization

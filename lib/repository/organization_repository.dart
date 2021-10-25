@@ -173,53 +173,6 @@ class OrganizationRepository extends ChangeNotifier {
     }
   }
 
-  //get current organization signed In  staff to display at dashboard
-  Future<List<ClockUser>?> getCurrentOrganizationsignedStaff(
-      {required final String organizationId,
-      required final BuildContext context}) async {
-    List<ClockUser> staff = [];
-    try {
-      http.Response response = await http.get(Uri.parse(
-          kGetStaffSignedInEndpoint.replaceFirst("org_id", organizationId)));
-      if (response.statusCode == 200) {
-        List responseList = jsonDecode(response.body);
-        staff = responseList
-            .map((e) => ClockUser.fromJson(e as Map<String, dynamic>))
-            .toList();
-        return staff;
-      } else {
-        print(response.body);
-      }
-    } catch (error) {
-      print("error is $error");
-    }
-  }
-
-  //fetch organization signed In  visitors
-  Future<List<ClockUser>?> getCurrentOrganizationsignedVisitors(
-      {required final BuildContext context}) async {
-    List<ClockUser> staff = [];
-    final ClockUser clockUser = Hive.box(kUserBox).get(kCurrentUserKey);
-    final String orgName =
-        clockUser.currentOrganization!.organizationId.toString();
-    try {
-      http.Response response = await http.get(Uri.parse(
-          kGetVisitorSignedInEndpoint.replaceFirst("org_id", orgName)));
-      if (response.statusCode == 200) {
-        print("response from visitors ${response.body}");
-        List responseList = jsonDecode(response.body);
-        staff = responseList
-            .map((e) => ClockUser.fromJson(e as Map<String, dynamic>))
-            .toList();
-        return staff;
-      } else {
-        print(response.body);
-      }
-    } catch (error) {
-      print("error is $error");
-    }
-  }
-
   //fetch current user current organization registered staff
   Future<List<ClockUser>?> getCurrentOrganizationStaff(
       {required final String organizationId,
@@ -236,7 +189,6 @@ class OrganizationRepository extends ChangeNotifier {
 
         return staff;
       } else {
-        print(response.body);
       }
     } catch (error) {
       debugPrint("error when fetching current organization staff");
@@ -260,11 +212,9 @@ class OrganizationRepository extends ChangeNotifier {
 
         return organizations;
       } else {
-        print(response.body);
         return [];
       }
     } catch (error) {
-      print("error is $error");
     }
   }
 

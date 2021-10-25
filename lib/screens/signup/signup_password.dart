@@ -47,7 +47,6 @@ class _SignupPasswordScreenState extends State<SignupPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     userData = ModalRoute.of(context)?.settings.arguments as Map;
-    print("user data is $userData");
 
     return Consumer<ClockUserProvider>(
       builder: (context, ClockUserProvider accountProvider, child) {
